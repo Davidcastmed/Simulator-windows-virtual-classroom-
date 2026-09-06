@@ -1,0 +1,152 @@
+<div
+  id="desktop-environment"
+  class="relative w-screen h-screen overflow-hidden flex flex-col bg-[#0b0d11] select-none text-zinc-100"
+  role="region"
+  aria-label="Desktop Arbeitsbereich"
+  tabindex="0"
+  (click)="onDesktopClick($event)"
+  (contextmenu)="onDesktopContextMenu($event)"
+  (keydown.escape)="onDesktopClick($event)"
+>
+  <!-- Scenic / Dark Metal Landscape Background with Optical Depth -->
+  <div class="absolute inset-0 pointer-events-none overflow-hidden z-0">
+    <img
+      [src]="wallpaperService.currentWallpaper().url"
+      [alt]="isDe() ? wallpaperService.currentWallpaper().nameDe : wallpaperService.currentWallpaper().nameEs"
+      class="w-full h-full object-cover object-center transition-all duration-700 select-none"
+      [class.scale-105]="isRefreshing()"
+      referrerpolicy="no-referrer"
+    />
+    <!-- Dark metal ambient vignette ensuring superior contrast -->
+    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 pointer-events-none"></div>
+    <div class="absolute inset-0 bg-black/15 pointer-events-none"></div>
+
+    <!-- Desktop top-right quick wallpaper switcher badge (Dark Metal finish) -->
+    <div class="absolute top-3.5 right-4 z-10 pointer-events-auto flex items-center gap-2 select-none">
+      <button
+        type="button"
+        (click)="wallpaperService.openPicker()"
+        class="px-3.5 py-1.5 rounded-full bg-zinc-950/80 hover:bg-zinc-900/95 backdrop-blur-md border border-zinc-700/80 text-zinc-200 hover:text-white text-xs font-medium flex items-center gap-2 shadow-2xl transition-all hover:scale-105 group"
+        [title]="t().system.changeWallpaper"
+      >
+        <mat-icon class="text-sm text-zinc-400 group-hover:text-zinc-200 group-hover:rotate-12 transition-transform !w-4 !h-4 flex items-center justify-center">wallpaper</mat-icon>
+        <span class="drop-shadow tracking-wide">{{ isDe() ? wallpaperService.currentWallpaper().nameDe : wallpaperService.currentWallpaper().nameEs }}</span>
+        <mat-icon class="text-xs text-zinc-500 !w-3 !h-3">expand_more</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Desktop Icons Grid (Free-standing desktop icons without boxes or containers) -->
+  <div
+    id="desktop-icons-area"
+    class="relative z-10 flex-1 p-4 flex flex-col flex-wrap content-start gap-4 overflow-hidden"
+    [class.opacity-50]="isRefreshing()"
+    [class.transition-opacity]="true"
+  >
+    @for (icon of desktopIcons(); track icon.id) {
+      <button
+        [id]="icon.id"
+        type="button"
+        class="desktop-icon w-24 p-2 rounded-xl flex flex-col items-center justify-start text-center cursor-pointer transition-all duration-150 group focus:outline-none"
+        [class.bg-zinc-800/60]="selectedIconId() === icon.id"
+        [class.ring-1]="selectedIconId() === icon.id"
+        [class.ring-zinc-400/50]="selectedIconId() === icon.id"
+        [class.shadow-lg]="selectedIconId() === icon.id"
+        [class.hover:bg-zinc-800/30]="selectedIconId() !== icon.id"
+        (click)="onIconClick($event, icon)"
+        (dblclick)="onIconDblClick(icon)"
+        (keydown.enter)="onIconDblClick(icon)"
+      >
+        <!-- Icon itself: Free-floating with optical drop-shadow, no background box -->
+        <mat-icon
+          class="text-5xl !w-12 !h-12 flex items-center justify-center filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.85)] group-hover:scale-110 group-hover:drop-shadow-[0_6px_14px_rgba(0,0,0,0.95)] transition-transform duration-200"
+          [class]="icon.iconColor"
+        >
+          {{ icon.icon }}
+        </mat-icon>
+
+        <!-- Name below icon: Clean typography with subtle drop-shadow, no box around it -->
+        <span
+          class="mt-1.5 text-xs font-medium text-white tracking-tight leading-snug line-clamp-2 select-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] px-1 rounded transition-colors text-center"
+          [class.bg-zinc-700/80]="selectedIconId() === icon.id"
+          [class.text-zinc-100]="selectedIconId() === icon.id"
+        >
+          {{ icon.name }}
+        </span>
+      </button>
+    }
+  </div>
+
+  <!-- Open Windows Stack -->
+  @for (win of wm.windows(); track win.id) {
+    <app-window-frame [win]="win">
+      @switch (win.appType) {
+        @case ('explorer') {
+          <app-file-explorer [initialPath]="getInitialPath(win.params)" />
+        }
+        @case ('coding') {
+          <app-coding-app />
+        }
+        @case ('logic-games') {
+          <app-logic-games />
+        }
+        @case ('groups-wall') {
+          <app-groups-wall />
+        }
+        @case ('paint') {
+          <app-paint-app [initialFile]="getInitialFile(win.params)" />
+        }
+        @case ('activities') {
+          <app-activities-widget />
+        }
+        @case ('teacher') {
+          <app-teacher-dashboard />
+        }
+        @case ('help') {
+          <app-help-dialog />
+        }
+        @case ('chat') {
+          <app-classroom-chat />
+        }
+        @case ('whiteboard') {
+          <app-whiteboard-app />
+        }
+        @case ('peers') {
+          <app-peers-widget />
+        }
+      }
+    </app-window-frame>
+  }
+
+  <!-- Real-time Class Demo Overlay -->
+  <app-class-demo-overlay />
+
+  <!-- Start Menu Popup -->
+  @if (isStartMenuOpen()) {
+    <app-start-menu (closeMenu)="onCloseStartMenu()" />
+  }
+
+  <!-- Taskbar at bottom -->
+  <app-taskbar (startToggle)="onStartToggle($event)" />
+
+  <!-- Login / Welcome Modal if user is not in a classroom -->
+  @if (!classroom.currentUser()) {
+    <app-login-modal />
+  }
+
+  <!-- Desktop Right-Click Context Menu -->
+  @if (contextMenuPos(); as pos) {
+    <app-desktop-context-menu
+      [x]="pos.x"
+      [y]="pos.y"
+      (refresh)="onRefreshDesktop()"
+      (openPaint)="onOpenPaint()"
+      (closeMenu)="contextMenuPos.set(null)"
+    />
+  }
+
+  <!-- Wallpaper Gallery / Chooser Dialog -->
+  @if (wallpaperService.isPickerOpen()) {
+    <app-wallpaper-dialog />
+  }
+</div>

@@ -1,0 +1,94 @@
+/* You can add global styles to this file, and also import other style files */
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+@import "tailwindcss";
+
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: #0b0d11;
+  color: #e2e8f0;
+}
+
+/* Custom desktop dark metal scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #101318;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2e3543;
+  border-radius: 9999px;
+  border: 1px solid #3d4657;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #475267;
+}
+
+/* Dark Metal utilities */
+.bg-metal-dark {
+  background: linear-gradient(180deg, #222730 0%, #15181f 100%);
+}
+
+.bg-metal-surface {
+  background: linear-gradient(180deg, #1d222b 0%, #12151b 100%);
+}
+
+.bg-metal-card {
+  background: linear-gradient(180deg, #252b36 0%, #191c24 100%);
+}
+
+.bg-metal-header {
+  background: linear-gradient(180deg, #2c3341 0%, #1d222b 100%);
+}
+
+.metal-border {
+  border-color: #384252;
+}
+
+.metal-bevel {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.metal-btn {
+  background: linear-gradient(180deg, #2e3542 0%, #1f242e 100%);
+  border: 1px solid #414b5c;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.metal-btn:hover {
+  background: linear-gradient(180deg, #374050 0%, #262c38 100%);
+  border-color: #536077;
+}
+
+.metal-btn-primary {
+  background: linear-gradient(180deg, #3b4455 0%, #262c37 100%);
+  border: 1px solid #5a677e;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 2px 6px rgba(0, 0, 0, 0.5);
+  color: #f1f5f9;
+}
+
+.metal-btn-primary:hover {
+  background: linear-gradient(180deg, #465166 0%, #2f3745 100%);
+  border-color: #71809a;
+}
+
+.window-active-shadow {
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.1), 0 0 20px rgba(161, 161, 170, 0.12);
+}
+
+.window-inactive-shadow {
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.75);
+}
+
+.metal-sheen-inset {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}

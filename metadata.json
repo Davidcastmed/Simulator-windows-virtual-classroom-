@@ -1,0 +1,6 @@
+{
+  "name": "KlassenDesktop",
+  "description": "Virtuelle Desktop-Lernumgebung für Schüler (11-12 Jahre) zum Erlernen von Datei-Organisation, Fenstermanagement und Malen im synchronisierten Klassenraum.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
