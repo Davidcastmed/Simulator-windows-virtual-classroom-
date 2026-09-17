@@ -25,6 +25,8 @@ import { WindowFrame } from './components/window-frame';
 import { ClassroomChatComponent } from './components/classroom-chat';
 import { WhiteboardAppComponent } from './components/whiteboard-app';
 import { PeersWidgetComponent } from './components/peers-widget';
+import { SettingsApp } from './components/settings-app';
+import { AppearanceService } from './services/appearance.service';
 import { ClassroomService } from './services/classroom.service';
 import { I18nService } from './services/i18n.service';
 import { WallpaperService } from './services/wallpaper.service';
@@ -47,7 +49,8 @@ interface DesktopIcon {
     | 'groups-wall'
     | 'chat'
     | 'whiteboard'
-    | 'peers';
+    | 'peers'
+    | 'settings';
   params?: Record<string, unknown>;
   teacherOnly?: boolean;
   studentOnly?: boolean;
@@ -76,6 +79,7 @@ interface DesktopIcon {
     ClassroomChatComponent,
     WhiteboardAppComponent,
     PeersWidgetComponent,
+    SettingsApp,
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -85,6 +89,7 @@ export class App {
   readonly wm = inject(WindowManagerService);
   readonly i18n = inject(I18nService);
   readonly wallpaperService = inject(WallpaperService);
+  readonly appearance = inject(AppearanceService);
 
   readonly t = this.i18n.t;
   readonly isDe = this.i18n.isDe;
@@ -217,6 +222,13 @@ export class App {
         icon: 'help_outline',
         iconColor: 'text-sky-400',
         appType: 'help',
+      },
+      {
+        id: 'icon-settings',
+        name: this.isDe() ? 'Einstellungen' : 'Ajustes',
+        icon: 'tune',
+        iconColor: 'text-blue-400',
+        appType: 'settings',
       },
     );
 

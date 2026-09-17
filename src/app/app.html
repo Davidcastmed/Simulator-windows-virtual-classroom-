@@ -1,6 +1,7 @@
 <div
   id="desktop-environment"
   class="relative w-screen h-screen overflow-hidden flex flex-col bg-[#0b0d11] select-none text-zinc-100"
+  [class]="appearance.themeClass()"
   role="region"
   aria-label="Desktop Arbeitsbereich"
   tabindex="0"
@@ -8,7 +9,7 @@
   (contextmenu)="onDesktopContextMenu($event)"
   (keydown.escape)="onDesktopClick($event)"
 >
-  <!-- Scenic / Dark Metal Landscape Background with Optical Depth -->
+  <!-- Scenic Landscape Background with Optical Depth -->
   <div class="absolute inset-0 pointer-events-none overflow-hidden z-0">
     <img
       [src]="wallpaperService.currentWallpaper().url"
@@ -17,23 +18,9 @@
       [class.scale-105]="isRefreshing()"
       referrerpolicy="no-referrer"
     />
-    <!-- Dark metal ambient vignette ensuring superior contrast -->
+    <!-- Ambient vignette ensuring superior contrast -->
     <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 pointer-events-none"></div>
     <div class="absolute inset-0 bg-black/15 pointer-events-none"></div>
-
-    <!-- Desktop top-right quick wallpaper switcher badge (Dark Metal finish) -->
-    <div class="absolute top-3.5 right-4 z-10 pointer-events-auto flex items-center gap-2 select-none">
-      <button
-        type="button"
-        (click)="wallpaperService.openPicker()"
-        class="px-3.5 py-1.5 rounded-full bg-zinc-950/80 hover:bg-zinc-900/95 backdrop-blur-md border border-zinc-700/80 text-zinc-200 hover:text-white text-xs font-medium flex items-center gap-2 shadow-2xl transition-all hover:scale-105 group"
-        [title]="t().system.changeWallpaper"
-      >
-        <mat-icon class="text-sm text-zinc-400 group-hover:text-zinc-200 group-hover:rotate-12 transition-transform !w-4 !h-4 flex items-center justify-center">wallpaper</mat-icon>
-        <span class="drop-shadow tracking-wide">{{ isDe() ? wallpaperService.currentWallpaper().nameDe : wallpaperService.currentWallpaper().nameEs }}</span>
-        <mat-icon class="text-xs text-zinc-500 !w-3 !h-3">expand_more</mat-icon>
-      </button>
-    </div>
   </div>
 
   <!-- Desktop Icons Grid (Free-standing desktop icons without boxes or containers) -->
@@ -113,6 +100,9 @@
         }
         @case ('peers') {
           <app-peers-widget />
+        }
+        @case ('settings') {
+          <app-settings-app />
         }
       }
     </app-window-frame>

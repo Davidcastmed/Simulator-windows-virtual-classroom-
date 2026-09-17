@@ -203,6 +203,22 @@ import { WindowManagerService } from '../services/window-manager.service';
           </button>
         }
 
+        <!-- Settings -->
+        <button
+          id="start-app-settings"
+          type="button"
+          class="w-full p-2 rounded-xl flex items-center gap-3 hover:bg-zinc-800/80 border border-transparent hover:border-zinc-700/60 transition-colors text-left"
+          (click)="openApp('settings')"
+        >
+          <div class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-300 flex items-center justify-center border border-blue-500/30">
+            <mat-icon class="text-lg !w-5 !h-5 flex items-center justify-center">tune</mat-icon>
+          </div>
+          <div>
+            <div class="text-xs font-semibold text-zinc-200">{{ i18n.isDe() ? 'Einstellungen' : 'Ajustes del Sistema' }}</div>
+            <div class="text-[10px] text-zinc-400">{{ i18n.isDe() ? 'Farben, Blur & Fenster anpassen' : 'Colores, blur y ventanas' }}</div>
+          </div>
+        </button>
+
         <!-- Help -->
         <button
           id="start-app-help"
@@ -274,7 +290,8 @@ export class StartMenu {
       | 'groups-wall'
       | 'chat'
       | 'whiteboard'
-      | 'peers',
+      | 'peers'
+      | 'settings',
   ): void {
     this.wm.openWindow(appType);
     this.closeMenu.emit();

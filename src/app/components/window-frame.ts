@@ -2,12 +2,14 @@ import {
   ChangeDetectionStrategy,
   Component,
   HostListener,
+  computed,
   inject,
   input,
   signal,
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import type { WindowState } from '../models/classroom.types';
+import { AppearanceService } from '../services/appearance.service';
 import { WindowManagerService } from '../services/window-manager.service';
 
 @Component({
@@ -18,11 +20,16 @@ import { WindowManagerService } from '../services/window-manager.service';
     <div
       [id]="'window-' + win().id"
       class="absolute flex flex-col rounded-xl shadow-2xl border transition-all overflow-hidden"
+      [class]="appearance.blurClass()"
       [class.hidden]="win().isMinimized"
-      [class.border-zinc-500]="isActive()"
-      [class.window-active-shadow]="isActive()"
-      [class.border-zinc-700]="!isActive()"
-      [class.window-inactive-shadow]="!isActive()"
+      [class.border-slate-400]="isActive() && appearance.isLight()"
+      [class.window-active-shadow-light]="isActive() && appearance.isLight()"
+      [class.border-slate-300]="!isActive() && appearance.isLight()"
+      [class.window-inactive-shadow-light]="!isActive() && appearance.isLight()"
+      [class.border-zinc-500]="isActive() && !appearance.isLight()"
+      [class.window-active-shadow]="isActive() && !appearance.isLight()"
+      [class.border-zinc-700]="!isActive() && !appearance.isLight()"
+      [class.window-inactive-shadow]="!isActive() && !appearance.isLight()"
       [style.left.px]="win().isMaximized ? 0 : win().x"
       [style.top.px]="win().isMaximized ? 0 : win().y"
       [style.width.px]="win().isMaximized ? maxWidth() : win().width"
@@ -30,26 +37,43 @@ import { WindowManagerService } from '../services/window-manager.service';
       [style.z-index]="win().zIndex"
       (mousedown)="bringToFront()"
     >
-      <!-- Title Bar (Brushed Dark Metal) -->
+      <!-- Title Bar (Light Silver / Titanium or Dark Metal based on settings) -->
       <div
         [id]="'window-titlebar-' + win().id"
         class="h-10 px-3 flex items-center justify-between select-none cursor-move shrink-0 border-b transition-colors"
         [class.bg-gradient-to-r]="true"
-        [class.from-zinc-800]="isActive()"
-        [class.via-zinc-750]="isActive()"
-        [class.to-zinc-800]="isActive()"
-        [class.border-zinc-650]="isActive()"
-        [class.text-zinc-100]="isActive()"
-        [class.metal-sheen-inset]="isActive()"
-        [class.from-zinc-900]="!isActive()"
-        [class.via-zinc-850]="!isActive()"
-        [class.to-zinc-900]="!isActive()"
-        [class.border-zinc-800]="!isActive()"
-        [class.text-zinc-400]="!isActive()"
+        [class.from-slate-200]="isActive() && appearance.isLight()"
+        [class.via-slate-100]="isActive() && appearance.isLight()"
+        [class.to-slate-200]="isActive() && appearance.isLight()"
+        [class.border-slate-300]="isActive() && appearance.isLight()"
+        [class.text-slate-800]="isActive() && appearance.isLight()"
+        [class.light-sheen-inset]="isActive() && appearance.isLight()"
+        [class.from-slate-100]="!isActive() && appearance.isLight()"
+        [class.via-slate-50]="!isActive() && appearance.isLight()"
+        [class.to-slate-100]="!isActive() && appearance.isLight()"
+        [class.border-slate-250]="!isActive() && appearance.isLight()"
+        [class.text-slate-500]="!isActive() && appearance.isLight()"
+        [class.from-zinc-800]="isActive() && !appearance.isLight()"
+        [class.via-zinc-750]="isActive() && !appearance.isLight()"
+        [class.to-zinc-800]="isActive() && !appearance.isLight()"
+        [class.border-zinc-650]="isActive() && !appearance.isLight()"
+        [class.text-zinc-100]="isActive() && !appearance.isLight()"
+        [class.metal-sheen-inset]="isActive() && !appearance.isLight()"
+        [class.from-zinc-900]="!isActive() && !appearance.isLight()"
+        [class.via-zinc-850]="!isActive() && !appearance.isLight()"
+        [class.to-zinc-900]="!isActive() && !appearance.isLight()"
+        [class.border-zinc-800]="!isActive() && !appearance.isLight()"
+        [class.text-zinc-400]="!isActive() && !appearance.isLight()"
         (mousedown)="startDrag($event)"
       >
         <div class="flex items-center gap-2 text-sm font-semibold tracking-tight truncate">
-          <mat-icon class="text-sky-300 text-lg !w-5 !h-5 flex items-center justify-center filter drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">{{ win().icon }}</mat-icon>
+          <mat-icon
+            class="text-lg !w-5 !h-5 flex items-center justify-center filter drop-shadow-sm"
+            [class.text-sky-600]="appearance.isLight()"
+            [class.text-sky-300]="!appearance.isLight()"
+          >
+            {{ win().icon }}
+          </mat-icon>
           <span class="truncate">{{ win().title }}</span>
         </div>
 
@@ -59,7 +83,13 @@ import { WindowManagerService } from '../services/window-manager.service';
           <button
             [id]="'btn-minimize-' + win().id"
             type="button"
-            class="w-7 h-7 flex items-center justify-center rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/60 transition-colors"
+            class="w-7 h-7 flex items-center justify-center rounded-md transition-colors"
+            [class.text-slate-600]="appearance.isLight()"
+            [class.hover:text-slate-950]="appearance.isLight()"
+            [class.hover:bg-slate-300/60]="appearance.isLight()"
+            [class.text-zinc-400]="!appearance.isLight()"
+            [class.hover:text-zinc-100]="!appearance.isLight()"
+            [class.hover:bg-zinc-700/60]="!appearance.isLight()"
             title="Minimieren"
             (click)="onMinimize($event)"
           >
@@ -70,7 +100,13 @@ import { WindowManagerService } from '../services/window-manager.service';
           <button
             [id]="'btn-maximize-' + win().id"
             type="button"
-            class="w-7 h-7 flex items-center justify-center rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/60 transition-colors"
+            class="w-7 h-7 flex items-center justify-center rounded-md transition-colors"
+            [class.text-slate-600]="appearance.isLight()"
+            [class.hover:text-slate-950]="appearance.isLight()"
+            [class.hover:bg-slate-300/60]="appearance.isLight()"
+            [class.text-zinc-400]="!appearance.isLight()"
+            [class.hover:text-zinc-100]="!appearance.isLight()"
+            [class.hover:bg-zinc-700/60]="!appearance.isLight()"
             [title]="win().isMaximized ? 'Wiederherstellen' : 'Maximieren'"
             (click)="onMaximize($event)"
           >
@@ -83,7 +119,11 @@ import { WindowManagerService } from '../services/window-manager.service';
           <button
             [id]="'btn-close-' + win().id"
             type="button"
-            class="w-7 h-7 flex items-center justify-center rounded-md text-zinc-400 hover:text-white hover:bg-rose-600/90 transition-colors"
+            class="w-7 h-7 flex items-center justify-center rounded-md transition-colors"
+            [class.text-slate-600]="appearance.isLight()"
+            [class.hover:text-white]="true"
+            [class.hover:bg-rose-600]="true"
+            [class.text-zinc-400]="!appearance.isLight()"
             title="Schließen"
             (click)="onClose($event)"
           >
@@ -92,8 +132,11 @@ import { WindowManagerService } from '../services/window-manager.service';
         </div>
       </div>
 
-      <!-- Window Body (Dark Metal interior) -->
-      <div class="flex-1 bg-[#111419] overflow-hidden flex flex-col relative text-zinc-100">
+      <!-- Window Body (Adaptive Light / Dark with Heavy Blur & Configurable Opacity) -->
+      <div
+        class="flex-1 overflow-hidden flex flex-col relative window-content-themed transition-colors"
+        [style.backgroundColor]="bodyBgColor()"
+      >
         <ng-content></ng-content>
       </div>
 
@@ -113,6 +156,22 @@ import { WindowManagerService } from '../services/window-manager.service';
 export class WindowFrame {
   readonly win = input.required<WindowState>();
   readonly wm = inject(WindowManagerService);
+  readonly appearance = inject(AppearanceService);
+
+  readonly bodyBgColor = computed(() => {
+    const opacity = this.appearance.windowOpacity() / 100;
+    switch (this.appearance.windowTheme()) {
+      case 'light-titanium':
+        return `rgba(245, 245, 244, ${opacity})`;
+      case 'soft-white':
+        return `rgba(255, 255, 255, ${opacity})`;
+      case 'dark-metal':
+        return `rgba(17, 20, 25, ${opacity})`;
+      case 'light-silver':
+      default:
+        return `rgba(248, 250, 252, ${opacity})`;
+    }
+  });
 
   readonly maxWidth = signal(typeof window !== 'undefined' ? window.innerWidth : 1200);
   readonly maxHeight = signal(typeof window !== 'undefined' ? window.innerHeight - 48 : 800);

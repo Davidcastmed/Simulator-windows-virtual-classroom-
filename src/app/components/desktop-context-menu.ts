@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, input, output } from '@angu
 import { MatIconModule } from '@angular/material/icon';
 import { I18nService } from '../services/i18n.service';
 import { WallpaperService } from '../services/wallpaper.service';
+import { WindowManagerService } from '../services/window-manager.service';
 
 @Component({
   selector: 'app-desktop-context-menu',
@@ -71,6 +72,16 @@ import { WallpaperService } from '../services/wallpaper.service';
 
       <div class="h-px bg-zinc-750 my-1 mx-2"></div>
 
+      <!-- Settings / Personalization Option -->
+      <button
+        type="button"
+        (click)="onOpenSettings()"
+        class="w-full px-3 py-2 flex items-center gap-2.5 hover:bg-zinc-800/80 hover:text-white transition text-left"
+      >
+        <mat-icon class="text-base text-blue-400">tune</mat-icon>
+        <span>{{ isDe() ? 'Einstellungen & Farben' : 'Ajustes y Colores' }}</span>
+      </button>
+
       <!-- Quick paint launcher -->
       <button
         type="button"
@@ -92,10 +103,16 @@ export class DesktopContextMenu {
   readonly closeMenu = output<void>();
 
   readonly wallpaperService = inject(WallpaperService);
+  readonly wm = inject(WindowManagerService);
   private readonly i18n = inject(I18nService);
 
   readonly t = this.i18n.t;
   readonly isDe = this.i18n.isDe;
+
+  onOpenSettings(): void {
+    this.wm.openWindow('settings');
+    this.closeMenu.emit();
+  }
 
   selectWallpaper(id: string): void {
     this.wallpaperService.setWallpaper(id);

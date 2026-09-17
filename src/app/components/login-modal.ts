@@ -187,9 +187,10 @@ import { I18nService } from '../services/i18n.service';
           }
 
           <!-- Quick Test Presets -->
+          <!-- Quick Test Presets & Offline Mode -->
           <div class="mt-3 pt-3 border-t border-zinc-750 flex flex-col gap-1.5">
             <span class="text-[10px] uppercase font-bold tracking-wider text-zinc-400 text-center">
-              Schnellstart zum Ausprobieren
+              {{ i18n.isDe() ? 'Schnellstart & Autonomer Modus' : 'Acceso Rápido y Modo Autónomo' }}
             </span>
             <div class="grid grid-cols-2 gap-2">
               <button
@@ -198,7 +199,7 @@ import { I18nService } from '../services/i18n.service';
                 class="p-2 rounded-lg bg-zinc-850 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 text-[11px] font-medium transition-colors text-center shadow-sm"
                 (click)="quickStartTeacher()"
               >
-                Als Lehrkraft testen
+                {{ i18n.isDe() ? 'Als Lehrkraft testen' : 'Probar como Docente' }}
               </button>
               <button
                 id="btn-quick-student"
@@ -206,9 +207,20 @@ import { I18nService } from '../services/i18n.service';
                 class="p-2 rounded-lg bg-zinc-850 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 text-[11px] font-medium transition-colors text-center shadow-sm"
                 (click)="quickStartStudent()"
               >
-                Als Schüler testen
+                {{ i18n.isDe() ? 'Als Schüler testen' : 'Probar como Alumno' }}
               </button>
             </div>
+
+            <!-- Direct Autonomous local button (Vercel / serverless friendly) -->
+            <button
+              id="btn-direct-standalone"
+              type="button"
+              class="w-full py-2 px-3 rounded-lg bg-sky-950/40 hover:bg-sky-900/60 border border-sky-800/70 text-sky-300 text-[11px] font-medium transition-colors flex items-center justify-center gap-1.5 shadow-sm mt-1"
+              (click)="startOfflineSession()"
+            >
+              <mat-icon class="text-xs !w-3.5 !h-3.5">laptop_chromebook</mat-icon>
+              <span>{{ i18n.isDe() ? 'Autonomer Modus (Kein Server nötig)' : 'Modo Autónomo Local (Ideal Vercel / Sin servidor)' }}</span>
+            </button>
           </div>
         </div>
       </div>
@@ -234,6 +246,12 @@ export class LoginModal {
   toggleLanguage(): void {
     const next = this.i18n.currentLang() === 'de' ? 'es' : 'de';
     this.i18n.setLanguage(next);
+  }
+
+  startOfflineSession(): void {
+    const isTeacher = this.activeTab() === 'teacher';
+    const name = isTeacher ? (this.teacherName.trim() || 'Frau Weber') : (this.studentName.trim() || 'Lukas');
+    this.classroom.startStandaloneSession(isTeacher ? 'teacher' : 'student', name);
   }
 
   async joinAsStudent(): Promise<void> {

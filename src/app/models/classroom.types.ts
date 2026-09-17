@@ -170,7 +170,8 @@ export interface WindowState {
     | 'groups-wall'
     | 'chat'
     | 'whiteboard'
-    | 'peers';
+    | 'peers'
+    | 'settings';
   icon: string;
   isOpen: boolean;
   isMinimized: boolean;

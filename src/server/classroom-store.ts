@@ -10,8 +10,8 @@ import type {
   WhiteboardStroke,
 } from '../app/models/classroom.types.js';
 
-const DATA_DIR = join(process.cwd(), 'data');
-const DB_FILE = join(DATA_DIR, 'classrooms.json');
+let DATA_DIR = join(process.cwd(), 'data');
+let DB_FILE = join(DATA_DIR, 'classrooms.json');
 
 // In-memory store
 const classrooms = new Map<string, ClassroomState>();
@@ -23,8 +23,17 @@ function ensureDataDir(): void {
     if (!existsSync(DATA_DIR)) {
       mkdirSync(DATA_DIR, { recursive: true });
     }
-  } catch (err) {
-    console.error('Failed to create data dir:', err);
+  } catch {
+    // If cwd is read-only (e.g., on Vercel Serverless), fallback to /tmp
+    try {
+      DATA_DIR = '/tmp/data';
+      DB_FILE = join(DATA_DIR, 'classrooms.json');
+      if (!existsSync(DATA_DIR)) {
+        mkdirSync(DATA_DIR, { recursive: true });
+      }
+    } catch (fallbackErr) {
+      console.warn('Filesystem is completely read-only; operating purely in memory:', fallbackErr);
+    }
   }
 }
 

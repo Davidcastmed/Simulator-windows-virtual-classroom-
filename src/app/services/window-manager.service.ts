@@ -28,7 +28,8 @@ export class WindowManagerService {
       | 'groups-wall'
       | 'chat'
       | 'whiteboard'
-      | 'peers',
+      | 'peers'
+      | 'settings',
     title?: string,
     params?: Record<string, unknown>,
   ): WindowState {
@@ -133,6 +134,12 @@ export class WindowManagerService {
         icon = 'groups';
         defaultWidth = 440;
         defaultHeight = 600;
+        break;
+      case 'settings':
+        defaultTitle = title || (isDe ? 'Einstellungen' : 'Ajustes del Sistema');
+        icon = 'tune';
+        defaultWidth = 780;
+        defaultHeight = 560;
         break;
     }
 

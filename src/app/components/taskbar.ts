@@ -196,17 +196,24 @@ import { WindowManagerService } from '../services/window-manager.service';
         <div
           id="taskbar-connection-indicator"
           class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-750 text-[11px] shadow-sm"
-          [title]="'Verbindungsstatus: ' + classroom.connectionStatus()"
+          [title]="classroom.connectionStatus() === 'connected' ? (i18n.isDe() ? 'Server verbunden (Live)' : 'Conectado al servidor (En vivo)') : classroom.connectionStatus() === 'local' ? (i18n.isDe() ? 'Autonomer lokaler Modus (Vercel/Offline aktiv)' : 'Modo autónomo local activo (Sin servidor)') : (i18n.isDe() ? 'Verbinde...' : 'Conectando...')"
         >
           <span
             class="w-2 h-2 rounded-full"
             [class.bg-emerald-400]="classroom.connectionStatus() === 'connected'"
+            [class.bg-sky-400]="classroom.connectionStatus() === 'local'"
             [class.bg-amber-400]="classroom.connectionStatus() === 'connecting'"
             [class.bg-red-400]="classroom.connectionStatus() === 'disconnected'"
-            [class.animate-ping]="classroom.connectionStatus() === 'connecting'"
+            [class.animate-pulse]="classroom.connectionStatus() === 'connecting'"
           ></span>
           <span class="hidden xl:inline text-zinc-400">
-            {{ classroom.connectionStatus() === 'connected' ? 'Live' : 'Verbindung...' }}
+            {{
+              classroom.connectionStatus() === 'connected'
+                ? 'Live'
+                : classroom.connectionStatus() === 'local'
+                ? (i18n.isDe() ? 'Lokal' : 'Modo Local')
+                : (i18n.isDe() ? 'Verbinde...' : 'Conectando...')
+            }}
           </span>
         </div>
 
