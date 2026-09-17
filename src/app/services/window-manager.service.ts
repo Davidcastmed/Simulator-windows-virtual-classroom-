@@ -10,9 +10,21 @@ export class WindowManagerService {
 
   readonly windows = signal<WindowState[]>([]);
   readonly activeWindowId = signal<string | null>(null);
+  readonly isMobile = signal<boolean>(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
 
   private nextZIndex = 10;
   private openCount = 0;
+
+  constructor() {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', () => {
+        const mobile = window.innerWidth < 768;
+        if (this.isMobile() !== mobile) {
+          this.isMobile.set(mobile);
+        }
+      });
+    }
+  }
 
   openWindow(
     appType:
@@ -143,6 +155,10 @@ export class WindowManagerService {
         break;
     }
 
+    const isMobileDevice = this.isMobile();
+    const winWidth = isMobileDevice && typeof window !== 'undefined' ? window.innerWidth : defaultWidth;
+    const winHeight = isMobileDevice && typeof window !== 'undefined' ? Math.max(300, window.innerHeight - 48) : defaultHeight;
+
     const newWindow: WindowState = {
       id,
       title: defaultTitle,
@@ -150,11 +166,11 @@ export class WindowManagerService {
       icon,
       isOpen: true,
       isMinimized: false,
-      isMaximized: false,
-      x: Math.max(20, Math.min(window.innerWidth - defaultWidth - 40, 60 + offset)),
-      y: Math.max(20, Math.min(window.innerHeight - defaultHeight - 70, 50 + offset)),
-      width: defaultWidth,
-      height: defaultHeight,
+      isMaximized: isMobileDevice,
+      x: isMobileDevice ? 0 : Math.max(20, Math.min(window.innerWidth - defaultWidth - 40, 60 + offset)),
+      y: isMobileDevice ? 0 : Math.max(20, Math.min(window.innerHeight - defaultHeight - 70, 50 + offset)),
+      width: winWidth,
+      height: winHeight,
       zIndex: ++this.nextZIndex,
       params,
     };

@@ -21,7 +21,7 @@ import { WindowManagerService } from '../services/window-manager.service';
   template: `
     <div id="file-explorer-container" class="flex flex-col h-full w-full bg-slate-900 text-slate-100 select-none">
       <!-- Toolbar -->
-      <div id="explorer-toolbar" class="p-2 border-b border-slate-800 bg-slate-900 flex flex-wrap items-center gap-1.5 shrink-0 text-xs">
+      <div id="explorer-toolbar" class="p-2 border-b border-slate-800 bg-slate-900 flex items-center gap-1.5 shrink-0 text-xs overflow-x-auto no-scrollbar">
         <!-- New Folder -->
         <button
           id="btn-explorer-new-folder"
@@ -152,12 +152,23 @@ import { WindowManagerService } from '../services/window-manager.service';
       </div>
 
       <!-- Address Bar & Navigation -->
-      <div id="explorer-address-bar" class="px-3 py-2 border-b border-slate-800 bg-slate-900/80 flex items-center gap-2 text-xs">
+      <div id="explorer-address-bar" class="px-2 sm:px-3 py-2 border-b border-slate-800 bg-slate-900/80 flex items-center gap-1.5 sm:gap-2 text-xs">
+        <!-- Mobile Sidebar Toggle -->
+        <button
+          id="btn-nav-sidebar-toggle"
+          type="button"
+          class="sm:hidden w-7 h-7 flex items-center justify-center rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 shrink-0"
+          (click)="toggleMobileSidebar()"
+          [title]="showMobileSidebar() ? 'Dateien anzeigen' : 'Ordner anzeigen'"
+        >
+          <mat-icon class="text-base !w-4 !h-4 flex items-center justify-center">{{ showMobileSidebar() ? 'grid_view' : 'menu' }}</mat-icon>
+        </button>
+
         <!-- Back Button -->
         <button
           id="btn-nav-back"
           type="button"
-          class="w-7 h-7 flex items-center justify-center rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed"
+          class="w-7 h-7 flex items-center justify-center rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
           [disabled]="historyIndex() <= 0"
           (click)="goBack()"
           title="Zurück"
@@ -169,7 +180,7 @@ import { WindowManagerService } from '../services/window-manager.service';
         <button
           id="btn-nav-up"
           type="button"
-          class="w-7 h-7 flex items-center justify-center rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed"
+          class="w-7 h-7 flex items-center justify-center rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
           [disabled]="currentPath() === '/'"
           (click)="goUp()"
           title="Eine Ebene nach oben"
@@ -178,23 +189,23 @@ import { WindowManagerService } from '../services/window-manager.service';
         </button>
 
         <!-- Breadcrumb Path Display -->
-        <div id="explorer-breadcrumbs" class="flex-1 flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 overflow-x-auto">
+        <div id="explorer-breadcrumbs" class="flex-1 flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 overflow-x-auto no-scrollbar min-w-0">
           <mat-icon class="text-slate-400 text-base !w-4 !h-4 flex items-center justify-center shrink-0">computer</mat-icon>
           <span class="text-slate-500">/</span>
 
           <button
             type="button"
-            class="hover:text-white hover:underline cursor-pointer"
+            class="hover:text-white hover:underline cursor-pointer shrink-0"
             (click)="navigateTo('/')"
           >
             {{ t().system.thisPC }}
           </button>
 
           @for (part of breadcrumbParts(); track part.path) {
-            <span class="text-slate-500">/</span>
+            <span class="text-slate-500 shrink-0">/</span>
             <button
               type="button"
-              class="hover:text-white hover:underline cursor-pointer truncate max-w-[140px]"
+              class="hover:text-white hover:underline cursor-pointer truncate max-w-[100px] sm:max-w-[140px] shrink-0"
               (click)="navigateTo(part.path)"
             >
               {{ part.name }}
@@ -203,13 +214,13 @@ import { WindowManagerService } from '../services/window-manager.service';
         </div>
 
         <!-- Search input -->
-        <div class="relative w-48 shrink-0">
+        <div class="relative w-24 sm:w-48 shrink-0">
           <input
             id="explorer-search-input"
             type="text"
             [placeholder]="t().explorer.searchPlaceholder"
             [(ngModel)]="searchQuery"
-            class="w-full pl-7 pr-2 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500"
+            class="w-full pl-6 sm:pl-7 pr-2 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500"
           />
           <mat-icon class="absolute left-1.5 top-1.5 text-slate-500 text-base !w-4 !h-4 flex items-center justify-center">search</mat-icon>
         </div>
@@ -231,7 +242,14 @@ import { WindowManagerService } from '../services/window-manager.service';
       <!-- Main Body: Sidebar + Items Area -->
       <div class="flex-1 flex overflow-hidden">
         <!-- Left Sidebar: Folder Tree -->
-        <div id="explorer-sidebar" class="w-52 border-r border-slate-800 bg-slate-950/60 p-2 overflow-y-auto text-xs shrink-0 flex flex-col gap-0.5">
+        <div
+          id="explorer-sidebar"
+          class="border-r border-slate-800 bg-slate-950/95 sm:bg-slate-950/60 p-2 overflow-y-auto text-xs shrink-0 flex-col gap-0.5"
+          [class.hidden]="!showMobileSidebar() && wm.isMobile()"
+          [class.flex]="showMobileSidebar() || !wm.isMobile()"
+          [class.w-full]="wm.isMobile()"
+          [class.sm:w-52]="true"
+        >
           <div class="text-slate-500 uppercase tracking-wider text-[10px] font-semibold px-2 py-1">
             Schnellzugriff
           </div>
@@ -465,6 +483,11 @@ export class FileExplorer {
   readonly searchQuery = signal<string>('');
   readonly selectedItem = signal<VirtualItem | null>(null);
   readonly viewingTextDoc = signal<VirtualItem | null>(null);
+  readonly showMobileSidebar = signal<boolean>(false);
+
+  toggleMobileSidebar(): void {
+    this.showMobileSidebar.update((v) => !v);
+  }
 
   // History stack for Back/Forward navigation
   readonly pathHistory = signal<string[]>(['/']);
@@ -575,6 +598,7 @@ export class FileExplorer {
     this.currentPath.set(cleanPath);
     this.selectedItem.set(null);
     this.searchQuery.set('');
+    this.showMobileSidebar.set(false);
 
     // Push history
     const hist = this.pathHistory();
@@ -617,6 +641,10 @@ export class FileExplorer {
 
   selectItem(e: MouseEvent, item: VirtualItem): void {
     e.stopPropagation();
+    if (this.wm.isMobile() || this.selectedItem()?.path === item.path) {
+      this.openItem(item);
+      return;
+    }
     this.selectedItem.set(item);
   }
 

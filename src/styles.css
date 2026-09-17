@@ -217,3 +217,34 @@ html, body {
   color: var(--win-text-sub) !important;
 }
 
+/* Smartphone & Touch Utilities */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Ensure touch targets meet minimum 44px on interactive controls on mobile */
+@media (max-width: 768px) {
+  .touch-target-mobile {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+

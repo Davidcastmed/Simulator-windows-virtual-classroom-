@@ -13,7 +13,9 @@
   <div class="absolute inset-0 pointer-events-none overflow-hidden z-0">
     <img
       [src]="wallpaperService.currentWallpaper().url"
-      [alt]="isDe() ? wallpaperService.currentWallpaper().nameDe : wallpaperService.currentWallpaper().nameEs"
+      alt=""
+      role="presentation"
+      aria-hidden="true"
       class="w-full h-full object-cover object-center transition-all duration-700 select-none"
       [class.scale-105]="isRefreshing()"
       referrerpolicy="no-referrer"
@@ -26,7 +28,7 @@
   <!-- Desktop Icons Grid (Free-standing desktop icons without boxes or containers) -->
   <div
     id="desktop-icons-area"
-    class="relative z-10 flex-1 p-4 flex flex-col flex-wrap content-start gap-4 overflow-hidden"
+    class="relative z-10 flex-1 p-3 sm:p-4 grid grid-cols-3 sm:grid-cols-4 md:flex md:flex-col md:flex-wrap md:content-start gap-3 sm:gap-4 overflow-y-auto md:overflow-hidden touch-manipulation"
     [class.opacity-50]="isRefreshing()"
     [class.transition-opacity]="true"
   >
@@ -34,7 +36,7 @@
       <button
         [id]="icon.id"
         type="button"
-        class="desktop-icon w-24 p-2 rounded-xl flex flex-col items-center justify-start text-center cursor-pointer transition-all duration-150 group focus:outline-none"
+        class="desktop-icon w-full max-w-[100px] sm:w-24 p-2 rounded-xl flex flex-col items-center justify-start text-center cursor-pointer transition-all duration-150 group focus:outline-none touch-manipulation"
         [class.bg-zinc-800/60]="selectedIconId() === icon.id"
         [class.ring-1]="selectedIconId() === icon.id"
         [class.ring-zinc-400/50]="selectedIconId() === icon.id"
@@ -46,7 +48,7 @@
       >
         <!-- Icon itself: Free-floating with optical drop-shadow, no background box -->
         <mat-icon
-          class="text-5xl !w-12 !h-12 flex items-center justify-center filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.85)] group-hover:scale-110 group-hover:drop-shadow-[0_6px_14px_rgba(0,0,0,0.95)] transition-transform duration-200"
+          class="text-4xl sm:text-5xl !w-10 !h-10 sm:!w-12 sm:!h-12 flex items-center justify-center filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.85)] group-hover:scale-110 group-hover:drop-shadow-[0_6px_14px_rgba(0,0,0,0.95)] transition-transform duration-200"
           [class]="icon.iconColor"
         >
           {{ icon.icon }}
@@ -54,7 +56,7 @@
 
         <!-- Name below icon: Clean typography with subtle drop-shadow, no box around it -->
         <span
-          class="mt-1.5 text-xs font-medium text-white tracking-tight leading-snug line-clamp-2 select-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] px-1 rounded transition-colors text-center"
+          class="mt-1.5 text-[11px] sm:text-xs font-medium text-white tracking-tight leading-snug line-clamp-2 select-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] px-1 rounded transition-colors text-center"
           [class.bg-zinc-700/80]="selectedIconId() === icon.id"
           [class.text-zinc-100]="selectedIconId() === icon.id"
         >

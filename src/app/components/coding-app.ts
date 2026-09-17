@@ -202,15 +202,14 @@ const LEVELS: LevelConfig[] = [
 
 @Component({
   selector: 'app-coding-app',
-  standalone: true,
   imports: [CommonModule, MatIconModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div id="coding-app-root" class="flex flex-col h-full bg-slate-900 text-slate-100 font-sans select-none overflow-hidden">
       <!-- Top Bar: Level Selector, Stats & Controls -->
-      <header class="flex items-center justify-between px-4 py-2 bg-slate-800/90 border-b border-slate-700/80 shrink-0">
-        <div class="flex items-center gap-3">
-          <div class="flex items-center gap-1.5 px-2.5 py-1 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-lg text-sm font-semibold">
+      <header class="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 px-3 sm:px-4 py-2 bg-slate-800/90 border-b border-slate-700/80 shrink-0">
+        <div class="flex items-center gap-2 sm:gap-3">
+          <div class="flex items-center gap-1.5 px-2 py-1 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-lg text-xs sm:text-sm font-semibold">
             <mat-icon class="text-base leading-none">terminal</mat-icon>
             <span>{{ t().coding.title }}</span>
           </div>
@@ -222,7 +221,7 @@ const LEVELS: LevelConfig[] = [
                 type="button"
                 [id]="'btn-level-' + lvl.id"
                 (click)="selectLevel(lvl.id)"
-                class="w-7 h-7 flex items-center justify-center rounded-md text-xs font-bold transition-colors"
+                class="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-md text-xs font-bold transition-colors"
                 [class.bg-indigo-600]="currentLevelId() === lvl.id"
                 [class.text-white]="currentLevelId() === lvl.id"
                 [class.bg-slate-800]="currentLevelId() !== lvl.id"
@@ -236,26 +235,26 @@ const LEVELS: LevelConfig[] = [
         </div>
 
         <!-- Middle: Star Count and Status -->
-        <div class="flex items-center gap-4 text-xs">
-          <div class="flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-300 rounded-full font-medium">
-            <mat-icon class="text-base text-amber-400">star</mat-icon>
+        <div class="flex items-center gap-2 sm:gap-4 text-xs">
+          <div class="flex items-center gap-1 sm:gap-1.5 px-2.5 py-0.5 sm:py-1 bg-amber-500/10 border border-amber-500/20 text-amber-300 rounded-full font-medium">
+            <mat-icon class="text-sm sm:text-base text-amber-400">star</mat-icon>
             <span>{{ starsCollected() }} / {{ currentLevel().stars.length }}</span>
           </div>
 
-          <div class="flex items-center gap-1.5 px-3 py-1 bg-slate-800 border border-slate-700 rounded-full text-slate-300">
+          <div class="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-slate-800 border border-slate-700 rounded-full text-slate-300">
             <mat-icon class="text-base text-cyan-400">memory</mat-icon>
             <span>{{ program().length }} {{ t().coding.blocksPalette }}</span>
           </div>
         </div>
 
         <!-- Actions: Run, Step, Reset -->
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1.5 sm:gap-2">
           <button
             type="button"
             id="btn-run-code"
             (click)="runProgram()"
             [disabled]="isRunning() || program().length === 0"
-            class="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 disabled:opacity-40 disabled:pointer-events-none text-white text-xs font-semibold rounded-lg shadow transition"
+            class="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 disabled:opacity-40 disabled:pointer-events-none text-white text-xs font-semibold rounded-lg shadow transition"
           >
             <mat-icon class="text-base">play_arrow</mat-icon>
             <span>{{ isRunning() ? '...' : t().coding.run }}</span>
@@ -266,17 +265,17 @@ const LEVELS: LevelConfig[] = [
             id="btn-step-code"
             (click)="stepProgram()"
             [disabled]="isRunning() || program().length === 0"
-            class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 active:bg-slate-800 disabled:opacity-40 disabled:pointer-events-none text-slate-200 text-xs font-semibold rounded-lg transition"
+            class="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 bg-slate-700 hover:bg-slate-600 active:bg-slate-800 disabled:opacity-40 disabled:pointer-events-none text-slate-200 text-xs font-semibold rounded-lg transition"
           >
             <mat-icon class="text-base">skip_next</mat-icon>
-            <span>{{ t().coding.stepByStep }}</span>
+            <span class="hidden sm:inline">{{ t().coding.stepByStep }}</span>
           </button>
 
           <button
             type="button"
             id="btn-reset-code"
             (click)="resetSimulation()"
-            class="flex items-center gap-1 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-lg border border-slate-700 transition"
+            class="flex items-center gap-1 p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-lg border border-slate-700 transition"
             title="Reset"
           >
             <mat-icon class="text-base">refresh</mat-icon>
@@ -284,8 +283,36 @@ const LEVELS: LevelConfig[] = [
         </div>
       </header>
 
+      <!-- Mobile Tab Switcher (Spielfeld vs Code) -->
+      <div class="flex md:hidden items-center justify-center p-1 bg-slate-950 border-b border-slate-800 gap-1.5 shrink-0">
+        <button
+          type="button"
+          class="flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition"
+          [class.bg-indigo-600]="mobileTab() === 'grid'"
+          [class.text-white]="mobileTab() === 'grid'"
+          [class.bg-slate-900]="mobileTab() !== 'grid'"
+          [class.text-slate-400]="mobileTab() !== 'grid'"
+          (click)="mobileTab.set('grid')"
+        >
+          <mat-icon class="text-sm !w-4 !h-4">grid_view</mat-icon>
+          <span>{{ isDe() ? 'Spielfeld' : 'Tablero' }}</span>
+        </button>
+        <button
+          type="button"
+          class="flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition"
+          [class.bg-indigo-600]="mobileTab() === 'code'"
+          [class.text-white]="mobileTab() === 'code'"
+          [class.bg-slate-900]="mobileTab() !== 'code'"
+          [class.text-slate-400]="mobileTab() !== 'code'"
+          (click)="mobileTab.set('code')"
+        >
+          <mat-icon class="text-sm !w-4 !h-4">code</mat-icon>
+          <span>{{ isDe() ? 'Programm' : 'Código' }} ({{ program().length }})</span>
+        </button>
+      </div>
+
       <!-- Teacher's Pedagogical Advice Bar -->
-      <div class="flex items-center gap-2 px-4 py-2 bg-indigo-950/40 border-b border-indigo-900/40 text-xs text-indigo-200 shrink-0">
+      <div class="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-indigo-950/40 border-b border-indigo-900/40 text-xs text-indigo-200 shrink-0">
         <div class="flex items-center gap-1 font-bold text-indigo-300 shrink-0">
           <mat-icon class="text-base text-amber-400">school</mat-icon>
           <span>{{ isDe() ? currentLevel().conceptTitleDe : currentLevel().conceptTitleEs }}:</span>
@@ -294,19 +321,23 @@ const LEVELS: LevelConfig[] = [
       </div>
 
       <!-- Main Layout: Grid Canvas (Left) + Code Editor / Blocks (Right) -->
-      <div class="flex-1 grid grid-cols-12 gap-0 overflow-hidden">
+      <div class="flex-1 flex flex-col md:grid md:grid-cols-12 gap-0 overflow-hidden">
         <!-- LEFT: Robot Grid World (Cols 1-7) -->
-        <div class="col-span-7 flex flex-col items-center justify-center p-4 bg-slate-950/60 relative overflow-hidden">
+        <div
+          class="flex-1 md:col-span-7 flex flex-col items-center justify-center p-3 sm:p-4 bg-slate-950/60 relative overflow-y-auto"
+          [class.hidden]="mobileTab() !== 'grid'"
+          [class.md:flex]="true"
+        >
           <!-- Grid Container -->
           <div
-            class="grid gap-1.5 p-3 bg-slate-900/90 rounded-2xl border border-slate-800 shadow-2xl relative"
+            class="grid gap-1 sm:gap-1.5 p-2 sm:p-3 bg-slate-900/90 rounded-2xl border border-slate-800 shadow-2xl relative max-w-full overflow-auto"
             [style.grid-template-columns]="'repeat(' + currentLevel().gridWidth + ', minmax(0, 1fr))'"
           >
             @for (row of gridRows(); track $index) {
               @for (cell of row; track cell.x + '-' + cell.y) {
                 <div
                   [id]="'cell-' + cell.x + '-' + cell.y"
-                  class="w-14 h-14 rounded-xl flex items-center justify-center relative transition-all duration-300"
+                  class="w-11 h-11 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center relative transition-all duration-300"
                   [class.bg-slate-800]="cell.type === 'empty'"
                   [class.border]="true"
                   [class.border-slate-700/60]="cell.type === 'empty'"
@@ -427,7 +458,11 @@ const LEVELS: LevelConfig[] = [
         </div>
 
         <!-- RIGHT: Blocks Palette & Algorithm Timeline (Cols 8-12) -->
-        <div class="col-span-5 flex flex-col bg-slate-900 border-l border-slate-800 overflow-hidden">
+        <div
+          class="flex-1 md:col-span-5 flex flex-col bg-slate-900 md:border-l border-slate-800 overflow-y-auto"
+          [class.hidden]="mobileTab() !== 'code'"
+          [class.md:flex]="true"
+        >
           <!-- Block Palette Header -->
           <div class="p-3 bg-slate-850 border-b border-slate-800">
             <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center justify-between">
@@ -624,6 +659,7 @@ export class CodingApp implements OnInit, OnDestroy {
   readonly currentStepIndex = signal<number>(-1);
   readonly levelCompleted = signal<boolean>(false);
   readonly sharedNotice = signal<boolean>(false);
+  readonly mobileTab = signal<'grid' | 'code'>('grid');
 
   private audioCtx: AudioContext | null = null;
   private runTimer: ReturnType<typeof setTimeout> | null = null;
@@ -787,6 +823,7 @@ export class CodingApp implements OnInit, OnDestroy {
 
   async runProgram(): Promise<void> {
     if (this.isRunning() || this.program().length === 0) return;
+    this.mobileTab.set('grid');
     this.resetSimulation();
     this.isRunning.set(true);
 

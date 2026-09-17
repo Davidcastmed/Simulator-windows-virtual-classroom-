@@ -22,15 +22,15 @@ import { WindowManagerService } from '../services/window-manager.service';
   template: `
     <div
       id="desktop-taskbar"
-      class="h-12 w-full bg-gradient-to-r from-[#0d0f14] via-[#141820] to-[#0d0f14] border-t border-zinc-700/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_-4px_25px_rgba(0,0,0,0.7)] backdrop-blur-md px-2.5 flex items-center justify-between z-40 select-none text-zinc-200 shrink-0"
+      class="h-12 w-full bg-gradient-to-r from-[#0d0f14] via-[#141820] to-[#0d0f14] border-t border-zinc-700/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_-4px_25px_rgba(0,0,0,0.7)] backdrop-blur-md px-1.5 sm:px-2.5 flex items-center justify-between z-40 select-none text-zinc-200 shrink-0 safe-bottom touch-manipulation"
     >
       <!-- Left: Start Button & Quick Launches -->
-      <div class="flex items-center gap-2 h-full py-1">
+      <div class="flex items-center gap-1.5 sm:gap-2 h-full py-1 min-w-0">
         <!-- Start Button (Brushed Dark Metal) -->
         <button
           id="taskbar-start-button"
           type="button"
-          class="h-full px-3.5 rounded-xl flex items-center gap-2 font-bold text-xs transition-all border shadow-sm"
+          class="h-full px-2.5 sm:px-3.5 rounded-xl flex items-center gap-1.5 sm:gap-2 font-bold text-xs transition-all border shadow-sm shrink-0 touch-target-mobile"
           [class.bg-gradient-to-b]="true"
           [class.from-zinc-700]="isStartOpen()"
           [class.to-zinc-850]="isStartOpen()"
@@ -57,11 +57,11 @@ import { WindowManagerService } from '../services/window-manager.service';
         </button>
 
         <!-- Quick Collaborative Classroom Docks (Dark Metal) -->
-        <div class="flex items-center gap-1.5 h-full py-0.5">
+        <div class="flex items-center gap-1 sm:gap-1.5 h-full py-0.5 shrink-0">
           <button
             id="taskbar-quick-peers"
             type="button"
-            class="h-full px-2.5 rounded-xl bg-zinc-850/80 hover:bg-zinc-800 border border-zinc-700/80 text-emerald-300 text-xs flex items-center gap-1.5 transition-colors shadow-sm"
+            class="h-full px-2 sm:px-2.5 rounded-xl bg-zinc-850/80 hover:bg-zinc-800 border border-zinc-700/80 text-emerald-300 text-xs flex items-center gap-1 sm:gap-1.5 transition-colors shadow-sm"
             (click)="openApp('peers')"
             [title]="i18n.isDe() ? 'Mitschüler online ansehen' : 'Ver compañeros en línea'"
           >
@@ -72,7 +72,7 @@ import { WindowManagerService } from '../services/window-manager.service';
           <button
             id="taskbar-quick-chat"
             type="button"
-            class="h-full px-2.5 rounded-xl bg-zinc-850/80 hover:bg-zinc-800 border border-zinc-700/80 text-sky-300 text-xs flex items-center gap-1 transition-colors shadow-sm"
+            class="h-full px-2 sm:px-2.5 rounded-xl bg-zinc-850/80 hover:bg-zinc-800 border border-zinc-700/80 text-sky-300 text-xs flex items-center gap-1 transition-colors shadow-sm"
             (click)="openApp('chat')"
             [title]="i18n.isDe() ? 'Klassen-Chat' : 'Chat de clase'"
           >
@@ -82,7 +82,7 @@ import { WindowManagerService } from '../services/window-manager.service';
           <button
             id="taskbar-quick-whiteboard"
             type="button"
-            class="h-full px-2.5 rounded-xl bg-zinc-850/80 hover:bg-zinc-800 border border-zinc-700/80 text-purple-300 text-xs flex items-center gap-1 transition-colors shadow-sm"
+            class="h-full px-2 sm:px-2.5 rounded-xl bg-zinc-850/80 hover:bg-zinc-800 border border-zinc-700/80 text-purple-300 text-xs flex items-center gap-1 transition-colors shadow-sm"
             (click)="openApp('whiteboard')"
             [title]="i18n.isDe() ? 'Gemeinsame Tafel' : 'Pizarra digital colaborativa'"
           >
@@ -90,15 +90,15 @@ import { WindowManagerService } from '../services/window-manager.service';
           </button>
         </div>
 
-        <div class="h-5 w-px bg-zinc-750 mx-1"></div>
+        <div class="h-5 w-px bg-zinc-750 mx-0.5 sm:mx-1 shrink-0"></div>
 
         <!-- Open Windows Tabs (Brushed Metal) -->
-        <div class="flex items-center gap-1.5 overflow-x-auto max-w-lg h-full">
+        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar max-w-[120px] sm:max-w-lg h-full">
           @for (win of wm.windows(); track win.id) {
             <button
               [id]="'taskbar-window-' + win.id"
               type="button"
-              class="h-full px-3 rounded-lg flex items-center gap-1.5 text-xs transition-all border shrink-0 max-w-[160px]"
+              class="h-full px-2 sm:px-3 rounded-lg flex items-center gap-1.5 text-xs transition-all border shrink-0 max-w-[120px] sm:max-w-[160px]"
               [class.bg-gradient-to-b]="wm.activeWindowId() === win.id && !win.isMinimized"
               [class.from-zinc-750]="wm.activeWindowId() === win.id && !win.isMinimized"
               [class.to-zinc-850]="wm.activeWindowId() === win.id && !win.isMinimized"
@@ -125,7 +125,7 @@ import { WindowManagerService } from '../services/window-manager.service';
       @if (classroom.isBeingObserved()) {
         <div
           id="student-observed-indicator"
-          class="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-800/90 border border-zinc-500/50 text-zinc-200 text-xs shadow-md animate-pulse"
+          class="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-800/90 border border-zinc-500/50 text-zinc-200 text-xs shadow-md animate-pulse shrink-0"
         >
           <mat-icon class="text-sm !w-4 !h-4 text-sky-400">visibility</mat-icon>
           <span>{{ t().demo.teacherObserving }}</span>
@@ -133,13 +133,13 @@ import { WindowManagerService } from '../services/window-manager.service';
       }
 
       <!-- Right: System Tray (Hand Raise, Room Code, Lang, Clock) -->
-      <div class="flex items-center gap-2 text-xs">
+      <div class="flex items-center gap-1 sm:gap-2 text-xs shrink-0">
         <!-- Student Hand Raise -->
         @if (classroom.isStudent()) {
           <button
             id="taskbar-btn-hand-raise"
             type="button"
-            class="px-2.5 py-1.5 rounded-xl font-medium flex items-center gap-1.5 transition-all text-xs border"
+            class="px-2 sm:px-2.5 py-1.5 rounded-xl font-medium flex items-center gap-1 sm:gap-1.5 transition-all text-xs border shrink-0"
             [class.bg-red-600]="isHandRaised()"
             [class.border-red-500]="isHandRaised()"
             [class.text-white]="isHandRaised()"
@@ -169,11 +169,11 @@ import { WindowManagerService } from '../services/window-manager.service';
           </div>
         }
 
-        <!-- Wallpaper Selector -->
+        <!-- Wallpaper Selector (Desktop only) -->
         <button
           id="taskbar-wallpaper-btn"
           type="button"
-          class="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-750 text-[11px] font-medium text-zinc-300 hover:text-zinc-100 flex items-center gap-1 transition shadow-sm"
+          class="hidden sm:flex px-2 sm:px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-750 text-[11px] font-medium text-zinc-300 hover:text-zinc-100 items-center gap-1 transition shadow-sm"
           (click)="wallpaperService.openPicker()"
           [title]="t().system.changeWallpaper"
         >
@@ -185,17 +185,17 @@ import { WindowManagerService } from '../services/window-manager.service';
         <button
           id="taskbar-lang-selector"
           type="button"
-          class="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-750 text-[11px] font-medium text-zinc-300 hover:text-zinc-100 flex items-center gap-1 shadow-sm transition"
+          class="px-1.5 sm:px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-750 text-[11px] font-medium text-zinc-300 hover:text-zinc-100 flex items-center gap-1 shadow-sm transition"
           (click)="toggleLanguage()"
           [title]="'Sprache wechseln: ' + (i18n.currentLang() === 'de' ? 'Español' : 'Deutsch')"
         >
-          <span class="text-xs font-semibold">{{ i18n.currentLang() === 'de' ? '🇩🇪 DE' : '🇪🇸 ES' }}</span>
+          <span class="text-xs font-semibold">{{ i18n.currentLang() === 'de' ? '🇩🇪' : '🇪🇸' }}<span class="hidden sm:inline ml-0.5">{{ i18n.currentLang() === 'de' ? 'DE' : 'ES' }}</span></span>
         </button>
 
         <!-- Live Connection Pill -->
         <div
           id="taskbar-connection-indicator"
-          class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-750 text-[11px] shadow-sm"
+          class="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-750 text-[11px] shadow-sm"
           [title]="classroom.connectionStatus() === 'connected' ? (i18n.isDe() ? 'Server verbunden (Live)' : 'Conectado al servidor (En vivo)') : classroom.connectionStatus() === 'local' ? (i18n.isDe() ? 'Autonomer lokaler Modus (Vercel/Offline aktiv)' : 'Modo autónomo local activo (Sin servidor)') : (i18n.isDe() ? 'Verbinde...' : 'Conectando...')"
         >
           <span
@@ -218,9 +218,9 @@ import { WindowManagerService } from '../services/window-manager.service';
         </div>
 
         <!-- Clock & Date -->
-        <div id="taskbar-clock" class="px-2.5 py-1 rounded-lg bg-zinc-900/90 border border-zinc-800/80 text-right leading-tight cursor-default shadow-sm">
+        <div id="taskbar-clock" class="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg bg-zinc-900/90 border border-zinc-800/80 text-right leading-tight cursor-default shadow-sm">
           <div class="text-xs font-bold text-zinc-200 font-mono">{{ currentTime() }}</div>
-          <div class="text-[9px] text-zinc-400">{{ currentDate() }}</div>
+          <div class="hidden sm:block text-[9px] text-zinc-400">{{ currentDate() }}</div>
         </div>
       </div>
     </div>

@@ -20,10 +20,10 @@ import { I18nService } from '../services/i18n.service';
     >
       <div
         id="login-card"
-        class="w-full max-w-md bg-gradient-to-b from-[#1d232e] to-[#11141b] border border-zinc-650/90 rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.14)] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200 text-zinc-200"
+        class="w-full max-w-md max-h-[95vh] overflow-y-auto no-scrollbar bg-gradient-to-b from-[#1d232e] to-[#11141b] border border-zinc-650/90 rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.14)] flex flex-col animate-in fade-in zoom-in-95 duration-200 text-zinc-200"
       >
         <!-- Card Header (Dark Metal finish) -->
-        <div class="p-6 pb-4 border-b border-zinc-750 text-center relative bg-gradient-to-b from-zinc-800/40 to-transparent">
+        <div class="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-zinc-750 text-center relative bg-gradient-to-b from-zinc-800/40 to-transparent">
           <!-- Top language toggle -->
           <button
             type="button"

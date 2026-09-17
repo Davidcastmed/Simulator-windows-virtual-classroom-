@@ -237,6 +237,11 @@ export class App {
 
   onIconClick(e: MouseEvent, icon: DesktopIcon): void {
     e.stopPropagation();
+    if (this.wm.isMobile() || this.selectedIconId() === icon.id) {
+      this.wm.openWindow(icon.appType, undefined, icon.params);
+      this.selectedIconId.set(null);
+      return;
+    }
     this.selectedIconId.set(icon.id);
   }
 

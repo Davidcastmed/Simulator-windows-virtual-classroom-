@@ -17,24 +17,24 @@ import { WindowManagerService } from '../services/window-manager.service';
   template: `
     <div
       id="start-menu-popup"
-      class="absolute bottom-14 left-2 w-84 bg-gradient-to-b from-[#1e232d] to-[#11141a] border border-zinc-650/90 rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.14)] backdrop-blur-xl flex flex-col overflow-hidden z-50 text-zinc-100 select-none animate-in fade-in slide-in-from-bottom-2 duration-150"
+      class="fixed sm:absolute bottom-14 left-2 right-2 sm:right-auto sm:w-84 max-w-sm max-h-[82vh] sm:max-h-[560px] bg-gradient-to-b from-[#1e232d] to-[#11141a] border border-zinc-650/90 rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.14)] backdrop-blur-xl flex flex-col overflow-hidden z-50 text-zinc-100 select-none animate-in fade-in slide-in-from-bottom-2 duration-150 touch-manipulation"
     >
       <!-- Search Field (Dark metal inset) -->
-      <div class="p-3 border-b border-zinc-750 bg-zinc-950/70">
+      <div class="p-2.5 sm:p-3 border-b border-zinc-750 bg-zinc-950/70">
         <div class="relative">
           <input
             id="start-menu-search"
             type="text"
             [placeholder]="t().startMenu.searchPlaceholder"
             (input)="onSearchInput($event)"
-            class="w-full pl-8 pr-3 py-1.5 rounded-xl bg-zinc-900/90 border border-zinc-700 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400/40 shadow-inner"
+            class="w-full pl-8 pr-3 py-2 sm:py-1.5 rounded-xl bg-zinc-900/90 border border-zinc-700 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400/40 shadow-inner"
           />
-          <mat-icon class="absolute left-2 top-2 text-zinc-500 text-base !w-4 !h-4 flex items-center justify-center">search</mat-icon>
+          <mat-icon class="absolute left-2 top-2.5 sm:top-2 text-zinc-500 text-base !w-4 !h-4 flex items-center justify-center">search</mat-icon>
         </div>
       </div>
 
       <!-- App Grid / List -->
-      <div class="p-3 flex-1 overflow-y-auto flex flex-col gap-1 max-h-80">
+      <div class="p-2 sm:p-3 flex-1 overflow-y-auto flex flex-col gap-1 max-h-[55vh] sm:max-h-80">
         <div class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 px-2 py-1">
           {{ t().startMenu.pinnedApps }}
         </div>
