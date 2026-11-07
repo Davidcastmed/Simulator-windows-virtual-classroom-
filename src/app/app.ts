@@ -128,6 +128,14 @@ export class App {
         appType: 'logic-games',
       },
       {
+        id: 'icon-zeek',
+        name: 'Zeek the Geek',
+        icon: 'pest_control',
+        iconColor: 'text-amber-300',
+        appType: 'logic-games',
+        params: { initialGame: 'zeek' },
+      },
+      {
         id: 'icon-groups-wall',
         name: this.t().groupsWall.title,
         icon: 'diversity_3',
@@ -255,6 +263,14 @@ export class App {
 
   getInitialFile(params?: Record<string, unknown>): VirtualItem | null {
     return (params?.['file'] as VirtualItem) || null;
+  }
+
+  getInitialGame(params?: Record<string, unknown>): 'zeek' | 'cables' | 'boxes' {
+    const g = params?.['initialGame'];
+    if (g === 'zeek' || g === 'cables' || g === 'boxes') {
+      return g;
+    }
+    return 'zeek';
   }
 
   onDesktopClick(e?: Event): void {

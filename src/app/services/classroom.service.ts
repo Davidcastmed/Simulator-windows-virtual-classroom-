@@ -101,7 +101,8 @@ export class ClassroomService {
             this.classroom.set(parsedRoom);
             this.connectionStatus.set('local');
           } catch {
-            // Ignore parse error
+            // Clear broken room cache
+            localStorage.removeItem(STORAGE_ROOM_STATE_KEY);
           }
         }
 
@@ -123,12 +124,15 @@ export class ClassroomService {
               this.saveRoomStateToStorage(fallback.room);
             }
           }
+        }).catch(() => {
+          this.connectionStatus.set('local');
         });
       } else {
         this.connectionStatus.set('disconnected');
       }
     } catch (e) {
-      console.error('Error restoring session:', e);
+      console.error('Error restoring session, resetting storage cache:', e);
+      this.clearSessionStorage();
       this.connectionStatus.set('disconnected');
     }
   }
@@ -146,9 +150,25 @@ export class ClassroomService {
   saveRoomStateToStorage(room: ClassroomState): void {
     if (typeof window === 'undefined') return;
     try {
-      localStorage.setItem(STORAGE_ROOM_STATE_KEY, JSON.stringify(room));
+      // Create a lightweight copy without huge base64 image buffers to prevent mobile OOM
+      const sanitizedFiles: Record<string, VirtualItem> = {};
+      for (const [path, item] of Object.entries(room.files || {})) {
+        if (item.content && item.content.length > 50000) {
+          sanitizedFiles[path] = { ...item, content: '' };
+        } else {
+          sanitizedFiles[path] = item;
+        }
+      }
+      const lightRoom = {
+        ...room,
+        files: sanitizedFiles,
+        // Limit whiteboards and strokes stored in local storage
+        whiteboardStrokes: (room.whiteboardStrokes || []).slice(-50),
+        whiteboardStamps: (room.whiteboardStamps || []).slice(-30),
+      };
+      localStorage.setItem(STORAGE_ROOM_STATE_KEY, JSON.stringify(lightRoom));
     } catch {
-      // Storage quota or unavailable
+      // Storage quota or unavailable: safely ignore
     }
   }
 

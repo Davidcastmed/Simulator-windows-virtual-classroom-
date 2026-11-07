@@ -6,7 +6,6 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import type { VirtualItem } from '../models/classroom.types';
 import { ActivityTrackerService } from '../services/activity-tracker.service';
@@ -17,7 +16,7 @@ import { WindowManagerService } from '../services/window-manager.service';
 @Component({
   selector: 'app-file-explorer',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatIconModule, FormsModule],
+  imports: [MatIconModule],
   template: `
     <div id="file-explorer-container" class="flex flex-col h-full w-full bg-slate-900 text-slate-100 select-none">
       <!-- Toolbar -->
@@ -219,7 +218,8 @@ import { WindowManagerService } from '../services/window-manager.service';
             id="explorer-search-input"
             type="text"
             [placeholder]="t().explorer.searchPlaceholder"
-            [(ngModel)]="searchQuery"
+            [value]="searchQuery()"
+            (input)="searchQuery.set($any($event.target).value)"
             class="w-full pl-6 sm:pl-7 pr-2 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500"
           />
           <mat-icon class="absolute left-1.5 top-1.5 text-slate-500 text-base !w-4 !h-4 flex items-center justify-center">search</mat-icon>

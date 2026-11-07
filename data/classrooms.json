@@ -1,0 +1,227 @@
+{
+  "INF-101": {
+    "code": "INF-101",
+    "name": "Informatik Klasse 6b",
+    "createdAt": 1794072951745,
+    "teacherId": "teach_frl6z6d",
+    "teacherName": "Frau Weber",
+    "students": [
+      {
+        "id": "stud_oqqa6g2",
+        "name": "Lukas",
+        "role": "student",
+        "roomCode": "INF-101",
+        "connectedAt": 1794074012067,
+        "lastActive": 1794074012067,
+        "taskProgress": 0,
+        "currentApp": "explorer"
+      }
+    ],
+    "files": {
+      "/Klasse": {
+        "id": "f_klasse",
+        "name": "Meine Klasse",
+        "type": "folder",
+        "parentId": null,
+        "path": "/Klasse",
+        "ownerId": "system",
+        "isProtected": false,
+        "createdAt": 1794072951745,
+        "updatedAt": 1794072951745
+      },
+      "/Lehrermaterial": {
+        "id": "f_lehrer",
+        "name": "Lehrermaterial",
+        "type": "folder",
+        "parentId": null,
+        "path": "/Lehrermaterial",
+        "ownerId": "teacher",
+        "ownerName": "Frau Weber",
+        "isProtected": true,
+        "createdAt": 1794072951745,
+        "updatedAt": 1794072951745
+      },
+      "/Geteilte Arbeiten": {
+        "id": "f_geteilt",
+        "name": "Geteilte Arbeiten",
+        "type": "folder",
+        "parentId": null,
+        "path": "/Geteilte Arbeiten",
+        "ownerId": "teacher",
+        "isProtected": false,
+        "createdAt": 1794072951745,
+        "updatedAt": 1794072951745
+      },
+      "/Klasse/Equipos": {
+        "id": "f_equipos",
+        "name": "Equipos de Trabajo",
+        "type": "folder",
+        "parentId": "f_klasse",
+        "path": "/Klasse/Equipos",
+        "ownerId": "system",
+        "isProtected": false,
+        "createdAt": 1794072951745,
+        "updatedAt": 1794072951745
+      },
+      "/Klasse/Equipos/Equipo Astronautas": {
+        "id": "f_equipo_astronautas",
+        "name": "Equipo Astronautas",
+        "type": "folder",
+        "parentId": "f_equipos",
+        "path": "/Klasse/Equipos/Equipo Astronautas",
+        "ownerId": "system",
+        "isProtected": false,
+        "createdAt": 1794072951745,
+        "updatedAt": 1794072951745
+      },
+      "/Papierkorb": {
+        "id": "f_papierkorb",
+        "name": "Papierkorb",
+        "type": "folder",
+        "parentId": null,
+        "path": "/Papierkorb",
+        "ownerId": "system",
+        "isProtected": false,
+        "createdAt": 1794072951745,
+        "updatedAt": 1794072951745
+      },
+      "/Lehrermaterial/Computer_Grundregeln.txt": {
+        "id": "f_doc_grundregeln",
+        "name": "Computer_Grundregeln.txt",
+        "type": "file",
+        "fileType": "text",
+        "parentId": "f_lehrer",
+        "path": "/Lehrermaterial/Computer_Grundregeln.txt",
+        "ownerId": "teacher",
+        "ownerName": "Frau Weber",
+        "isProtected": true,
+        "content": "WILLKOMMEN ZUM COMPUTER-FÜHRERSCHEIN (Klasse 6)\n-----------------------------------------------\n1. Jeder Schüler hat seinen eigenen persönlichen Ordner.\n2. Speichere deine Zeichnungen immer mit einem aussagekräftigen Namen (z.B. \"Mein Haus.png\").\n3. Lösche niemals Dateien von Mitschülern!\n4. Im Papierkorb findest du Dateien wieder, falls du versehentlich etwas gelöscht hast.\n5. Benutze Strg+C zum Kopieren und Strg+V zum Einfügen.\n\nViel Spaß beim Entdecken des Computers!\n- Frau Weber",
+        "createdAt": 1794072951745,
+        "updatedAt": 1794072951745,
+        "sizeBytes": 450
+      },
+      "/Lehrermaterial/Tastatur_Tricks.txt": {
+        "id": "f_doc_tastatur",
+        "name": "Tastatur_Tricks.txt",
+        "type": "file",
+        "fileType": "text",
+        "parentId": "f_lehrer",
+        "path": "/Lehrermaterial/Tastatur_Tricks.txt",
+        "ownerId": "teacher",
+        "ownerName": "Frau Weber",
+        "isProtected": true,
+        "content": "SCHNELLE TASTEN-KOMBINATIONEN:\n----------------------------------\n* Strg + C = Kopieren (Copy)\n* Strg + V = Einfügen (Paste)\n* Strg + X = Ausschneiden (Cut)\n* Strg + Z = Rückgängig machen (Undo)\n* Strg + Y = Wiederholen (Redo)\n* Entf (Entfernen) = In den Papierkorb verschieben\n\nTipp: Mit der Tab-Taste kannst du schnell zwischen Feldern springen!",
+        "createdAt": 1794072951745,
+        "updatedAt": 1794072951745,
+        "sizeBytes": 310
+      },
+      "/Lehrermaterial/Muster_Haus.png": {
+        "id": "f_img_musterhaus",
+        "name": "Muster_Haus.png",
+        "type": "file",
+        "fileType": "image",
+        "parentId": "f_lehrer",
+        "path": "/Lehrermaterial/Muster_Haus.png",
+        "ownerId": "teacher",
+        "ownerName": "Frau Weber",
+        "isProtected": true,
+        "content": "data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"400\" height=\"300\" viewBox=\"0 0 400 300\"><rect width=\"400\" height=\"300\" fill=\"%23f1f5f9\"/><rect x=\"120\" y=\"140\" width=\"160\" height=\"120\" fill=\"%23f59e0b\" stroke=\"%23b45309\" stroke-width=\"4\"/><polygon points=\"200,60 100,140 300,140\" fill=\"%23ef4444\" stroke=\"%23b91c1c\" stroke-width=\"4\"/><rect x=\"180\" y=\"190\" width=\"40\" height=\"70\" fill=\"%233b82f6\"/><circle cx=\"150\" cy=\"170\" r=\"18\" fill=\"%2360a5fa\" stroke=\"%231d4ed8\" stroke-width=\"3\"/><circle cx=\"250\" cy=\"170\" r=\"18\" fill=\"%2360a5fa\" stroke=\"%231d4ed8\" stroke-width=\"3\"/><rect x=\"240\" y=\"80\" width=\"25\" height=\"40\" fill=\"%2378716c\"/><circle cx=\"50\" cy=\"60\" r=\"30\" fill=\"%23facc15\"/><text x=\"130\" y=\"285\" font-family=\"sans-serif\" font-size=\"14\" fill=\"%23334155\">Muster-Haus von Frau Weber</text></svg>",
+        "thumbnail": "data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"400\" height=\"300\" viewBox=\"0 0 400 300\"><rect width=\"400\" height=\"300\" fill=\"%23f1f5f9\"/><rect x=\"120\" y=\"140\" width=\"160\" height=\"120\" fill=\"%23f59e0b\" stroke=\"%23b45309\" stroke-width=\"4\"/><polygon points=\"200,60 100,140 300,140\" fill=\"%23ef4444\" stroke=\"%23b91c1c\" stroke-width=\"4\"/><rect x=\"180\" y=\"190\" width=\"40\" height=\"70\" fill=\"%233b82f6\"/><circle cx=\"150\" cy=\"170\" r=\"18\" fill=\"%2360a5fa\" stroke=\"%231d4ed8\" stroke-width=\"3\"/><circle cx=\"250\" cy=\"170\" r=\"18\" fill=\"%2360a5fa\" stroke=\"%231d4ed8\" stroke-width=\"3\"/><rect x=\"240\" y=\"80\" width=\"25\" height=\"40\" fill=\"%2378716c\"/><circle cx=\"50\" cy=\"60\" r=\"30\" fill=\"%23facc15\"/><text x=\"130\" y=\"285\" font-family=\"sans-serif\" font-size=\"14\" fill=\"%23334155\">Muster-Haus von Frau Weber</text></svg>",
+        "createdAt": 1794072951745,
+        "updatedAt": 1794072951745,
+        "sizeBytes": 1240
+      },
+      "/Klasse/Lukas": {
+        "id": "f_stud_stud_oqqa6g2",
+        "name": "Lukas",
+        "type": "folder",
+        "parentId": "f_klasse",
+        "path": "/Klasse/Lukas",
+        "ownerId": "stud_oqqa6g2",
+        "ownerName": "Lukas",
+        "isProtected": false,
+        "createdAt": 1794074012067,
+        "updatedAt": 1794074012067
+      },
+      "/Papierkorb/Lukas": {
+        "id": "f_trash_stud_oqqa6g2",
+        "name": "Lukas",
+        "type": "folder",
+        "parentId": "f_papierkorb",
+        "path": "/Papierkorb/Lukas",
+        "ownerId": "stud_oqqa6g2",
+        "ownerName": "Lukas",
+        "isProtected": false,
+        "createdAt": 1794074012067,
+        "updatedAt": 1794074012067
+      }
+    },
+    "demoMode": {
+      "active": false,
+      "controlledBy": "teach_frl6z6d",
+      "controlledByName": "Frau Weber",
+      "teacherCursor": {
+        "x": 200,
+        "y": 150,
+        "visible": false
+      }
+    },
+    "helpRequests": [
+      {
+        "id": "help_6tlm4vh",
+        "studentId": "stud_g1p7k",
+        "studentName": "Lukas",
+        "message": "Braucht Hilfe bei der aktuellen Aufgabe.",
+        "timestamp": 1794073966794
+      }
+    ],
+    "observingStudentId": null,
+    "groups": [
+      {
+        "id": "grp_astronautas",
+        "name": "Equipo Astronautas",
+        "icon": "rocket_launch",
+        "color": "blue",
+        "creatorId": "system",
+        "creatorName": "Profesor",
+        "members": [],
+        "notes": [
+          {
+            "id": "note_1",
+            "author": "Profesor",
+            "text": "¡Bienvenidos a este equipo! Aquí pueden guardar archivos colaborativos y compartir ideas.",
+            "timestamp": 1794072951745
+          }
+        ],
+        "folderPath": "/Klasse/Equipos/Equipo Astronautas",
+        "createdAt": 1794072951745
+      },
+      {
+        "id": "grp_exploradores",
+        "name": "Equipo Exploradores",
+        "icon": "explore",
+        "color": "emerald",
+        "creatorId": "system",
+        "creatorName": "Profesor",
+        "members": [],
+        "notes": [],
+        "folderPath": "/Klasse/Equipos/Equipo Exploradores",
+        "createdAt": 1794072951745
+      }
+    ],
+    "reactions": [],
+    "chatMessages": [
+      {
+        "id": "msg_welcome",
+        "senderId": "teach_frl6z6d",
+        "senderName": "Frau Weber",
+        "senderRole": "teacher",
+        "text": "¡Bienvenidos al espacio de la clase! Aquí podemos comunicarnos, compartir dudas e ideas.",
+        "timestamp": 1794072951745,
+        "type": "system"
+      }
+    ],
+    "whiteboardStrokes": [],
+    "whiteboardStamps": []
+  }
+}

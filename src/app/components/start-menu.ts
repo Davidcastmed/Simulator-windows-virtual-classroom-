@@ -71,6 +71,25 @@ import { WindowManagerService } from '../services/window-manager.service';
           </div>
         </button>
 
+        <!-- Zeek the Geek Retro Puzzle -->
+        <button
+          id="start-app-zeek"
+          type="button"
+          class="w-full p-2 rounded-xl flex items-center gap-3 hover:bg-zinc-800/80 border border-transparent hover:border-zinc-700/60 transition-colors text-left"
+          (click)="openApp('logic-games', { initialGame: 'zeek' })"
+        >
+          <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-300 flex items-center justify-center border border-amber-500/30">
+            <mat-icon class="text-lg !w-5 !h-5 flex items-center justify-center">pest_control</mat-icon>
+          </div>
+          <div>
+            <div class="text-xs font-semibold text-amber-200 flex items-center gap-1.5">
+              <span>Zeek the Geek</span>
+              <span class="text-[9px] px-1 py-0.2 bg-amber-500/30 text-amber-300 font-bold rounded">RETRO</span>
+            </div>
+            <div class="text-[10px] text-zinc-400">{{ i18n.isDe() ? 'Pilze fressen & Pflanzen füttern' : 'Come setas y alimenta plantas' }}</div>
+          </div>
+        </button>
+
         <!-- Groups & Live Class Wall -->
         <button
           id="start-app-groups-wall"
@@ -292,8 +311,9 @@ export class StartMenu {
       | 'whiteboard'
       | 'peers'
       | 'settings',
+    params?: Record<string, unknown>,
   ): void {
-    this.wm.openWindow(appType);
+    this.wm.openWindow(appType, undefined, params);
     this.closeMenu.emit();
   }
 

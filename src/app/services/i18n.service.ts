@@ -295,8 +295,16 @@ export interface Translations {
   };
   logicGames: {
     title: string;
+    tabZeek: string;
     tabCables: string;
     tabBoxes: string;
+    zeekTitle: string;
+    zeekSubtitle: string;
+    zeekWin: string;
+    zeekMushrooms: string;
+    zeekMoves: string;
+    zeekPlantWarning: string;
+    zeekPlantAteApple: string;
     cablesTitle: string;
     cablesSubtitle: string;
     cablesWin: string;
@@ -307,8 +315,10 @@ export interface Translations {
     restart: string;
     level: string;
     nextLevel: string;
+    teacherTipZeek: string;
     teacherTipCables: string;
     teacherTipBoxes: string;
+    soundToggle: string;
   };
   groupsWall: {
     title: string;
@@ -687,8 +697,16 @@ const DE_TRANSLATIONS: Translations = {
   },
   logicGames: {
     title: 'Logik- & Denkspiele',
-    tabCables: 'Digitale Pfade (Netzwerk-Kabel)',
-    tabBoxes: 'Daten-Lagerist (Kisten schieben)',
+    tabZeek: '🍄 Zeek the Geek',
+    tabCables: 'Digitale Pfade (Kabel)',
+    tabBoxes: 'Daten-Lagerist (Sokoban)',
+    zeekTitle: 'Zeek the Geek: Logik-Abenteuer',
+    zeekSubtitle: 'Füttere fleischfressende Pflanzen mit Äpfeln, sammle Schlüssel, sprenge Felsen und iss alle Pilze!',
+    zeekWin: 'Hurra! Zeek hat alle Pilze gemampft und das Ziel erreicht!',
+    zeekMushrooms: 'Pilze gesammelt',
+    zeekMoves: 'Züge',
+    zeekPlantWarning: 'Vorsicht! Die Pflanze beißt zu. Schiebe einen Apfel hinein, um sie satt zu machen!',
+    zeekPlantAteApple: 'Mampf! Die Pflanze hat den Apfel gefressen und schläft friedlich ein.',
     cablesTitle: 'Verbinde die Datenkabel',
     cablesSubtitle: 'Drehe die Leitungselemente, damit das Signal von Start nach Ziel fließen kann.',
     cablesWin: 'Signal vollständig verbunden! Der Datenstrom fließt!',
@@ -699,8 +717,10 @@ const DE_TRANSLATIONS: Translations = {
     restart: 'Neu starten',
     level: 'Rätsel',
     nextLevel: 'Nächstes Rätsel',
+    teacherTipZeek: 'Vorausschauendes Denken: Man kann Äpfel nur schieben, niemals ziehen!',
     teacherTipCables: 'In der Informatik müssen Daten wie Strom durch geschlossene Netze fließen.',
     teacherTipBoxes: 'Algorithmen planen Schritte voraus, um Blockaden im Speicher zu vermeiden.',
+    soundToggle: 'Ton umschalten',
   },
   groupsWall: {
     title: 'Klassenwand & Arbeitsgruppen',
@@ -1079,8 +1099,16 @@ const ES_TRANSLATIONS: Translations = {
   },
   logicGames: {
     title: 'Juegos de Lógica y Algoritmos',
-    tabCables: 'Caminos Digitales (Red de Cables)',
-    tabBoxes: 'Almacén de Datos (Mover Cajas)',
+    tabZeek: '🍄 Zeek the Geek',
+    tabCables: 'Caminos Digitales (Red)',
+    tabBoxes: 'Almacén de Datos (Sokoban)',
+    zeekTitle: 'Zeek the Geek: Aventura Retro de Lógica',
+    zeekSubtitle: 'Alimenta a las plantas carnívoras con manzanas, recoge llaves, detona dinamita y come todos los champiñones para ganar.',
+    zeekWin: '¡Genial! ¡Zeek comió todos los champiñones y completó el nivel con éxito!',
+    zeekMushrooms: 'Champiñones comidos',
+    zeekMoves: 'Movimientos',
+    zeekPlantWarning: '¡Cuidado! La planta carnívora muerde. ¡Empuja una manzana hacia su boca para calmarla!',
+    zeekPlantAteApple: '¡Ñam ñam! La planta devoró la manzana y se quedó profundamente dormida.',
     cablesTitle: 'Conecta el Cableado de Red',
     cablesSubtitle: 'Haz clic en las piezas del cable para rotarlas y conectar el servidor con el ordenador terminal.',
     cablesWin: '¡Circuito conectado! Los datos viajan a la velocidad de la luz.',
@@ -1091,8 +1119,10 @@ const ES_TRANSLATIONS: Translations = {
     restart: 'Reiniciar puzzle',
     level: 'Nivel',
     nextLevel: 'Siguiente puzzle',
+    teacherTipZeek: 'Pensamiento lógico: Las manzanas solo se pueden empujar, ¡nunca jalar! Piensa bien antes de moverte.',
     teacherTipCables: 'En informática, la información viaja por redes cerradas de conexiones ordenadas.',
     teacherTipBoxes: 'Pensar con anticipación te enseña cómo los procesadores organizan la memoria sin bloquearse.',
+    soundToggle: 'Activar/Desactivar Sonido',
   },
   groupsWall: {
     title: 'Muro de la Clase y Equipos',

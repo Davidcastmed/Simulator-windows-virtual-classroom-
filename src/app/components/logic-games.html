@@ -1,0 +1,682 @@
+<div id="logic-games-root" class="flex flex-col h-full bg-slate-950 text-slate-100 font-sans select-none overflow-hidden">
+  <!-- Top Navigation & Controls Bar -->
+  <header class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-slate-900 border-b border-slate-800 shrink-0">
+    <div class="flex items-center gap-1.5 sm:gap-2">
+      <!-- Game Selector Tabs -->
+      <div class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800">
+        <!-- Tab: Zeek the Geek -->
+        <button
+          type="button"
+          id="tab-zeek"
+          (click)="switchGame('zeek')"
+          class="flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-lg transition-all"
+          [class.bg-amber-600]="activeGame() === 'zeek'"
+          [class.text-white]="activeGame() === 'zeek'"
+          [class.shadow-md]="activeGame() === 'zeek'"
+          [class.shadow-amber-600/30]="activeGame() === 'zeek'"
+          [class.text-slate-400]="activeGame() !== 'zeek'"
+          [class.hover:text-slate-200]="activeGame() !== 'zeek'"
+        >
+          <span class="text-sm">🍄</span>
+          <span>Zeek the Geek</span>
+        </button>
+
+        <!-- Tab: Cables -->
+        <button
+          type="button"
+          id="tab-cables"
+          (click)="switchGame('cables')"
+          class="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg transition-all"
+          [class.bg-cyan-600]="activeGame() === 'cables'"
+          [class.text-white]="activeGame() === 'cables'"
+          [class.shadow-md]="activeGame() === 'cables'"
+          [class.shadow-cyan-600/30]="activeGame() === 'cables'"
+          [class.text-slate-400]="activeGame() !== 'cables'"
+          [class.hover:text-slate-200]="activeGame() !== 'cables'"
+        >
+          <mat-icon class="text-xs !w-3.5 !h-3.5">alt_route</mat-icon>
+          <span class="hidden sm:inline">{{ t().logicGames.tabCables }}</span>
+          <span class="sm:hidden">Red</span>
+        </button>
+
+        <!-- Tab: Boxes -->
+        <button
+          type="button"
+          id="tab-boxes"
+          (click)="switchGame('boxes')"
+          class="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg transition-all"
+          [class.bg-emerald-600]="activeGame() === 'boxes'"
+          [class.text-white]="activeGame() === 'boxes'"
+          [class.shadow-md]="activeGame() === 'boxes'"
+          [class.shadow-emerald-600/30]="activeGame() === 'boxes'"
+          [class.text-slate-400]="activeGame() !== 'boxes'"
+          [class.hover:text-slate-200]="activeGame() !== 'boxes'"
+        >
+          <mat-icon class="text-xs !w-3.5 !h-3.5">inventory_2</mat-icon>
+          <span class="hidden sm:inline">{{ t().logicGames.tabBoxes }}</span>
+          <span class="sm:hidden">Sokoban</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Right Controls: Levels, Audio & Restart -->
+    <div class="flex items-center gap-2">
+      <!-- Level numbers -->
+      <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800">
+        <span class="text-[11px] text-slate-400 px-1 hidden md:inline">Nivel:</span>
+        @for (lvl of currentLevelsList(); track lvl.id) {
+          <button
+            type="button"
+            (click)="selectLevel(lvl.id)"
+            class="w-6 h-6 flex items-center justify-center rounded text-xs font-bold transition-all"
+            [class.bg-amber-600]="activeGame() === 'zeek' && currentLevelId() === lvl.id"
+            [class.bg-cyan-600]="activeGame() === 'cables' && currentLevelId() === lvl.id"
+            [class.bg-emerald-600]="activeGame() === 'boxes' && currentLevelId() === lvl.id"
+            [class.text-white]="currentLevelId() === lvl.id"
+            [class.bg-slate-900]="currentLevelId() !== lvl.id"
+            [class.text-slate-400]="currentLevelId() !== lvl.id"
+            [class.hover:text-slate-200]="currentLevelId() !== lvl.id"
+          >
+            {{ lvl.id }}
+          </button>
+        }
+      </div>
+
+      <!-- Sound Mute/Unmute -->
+      <button
+        type="button"
+        (click)="toggleSound()"
+        class="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 flex items-center justify-center text-slate-300 transition"
+        [title]="t().logicGames.soundToggle"
+      >
+        <mat-icon class="text-base">{{ soundEnabled() ? 'volume_up' : 'volume_off' }}</mat-icon>
+      </button>
+
+      <!-- Restart Level -->
+      <button
+        type="button"
+        (click)="restartLevel()"
+        class="flex items-center gap-1 px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-medium rounded-lg border border-slate-800 transition"
+        title="Reiniciar Nivel"
+      >
+        <mat-icon class="text-sm">refresh</mat-icon>
+        <span class="hidden sm:inline">{{ t().logicGames.restart }}</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Didactic Teacher Tip Bar -->
+  <div class="flex items-center gap-2 px-3 py-1.5 bg-slate-900/90 border-b border-slate-800/80 text-xs text-slate-300 shrink-0">
+    <mat-icon class="text-base text-amber-400">psychology</mat-icon>
+    <div class="truncate">
+      <span class="font-bold text-slate-200">{{ isDe() ? 'Didaktischer Tipp:' : 'Consejo de Pensamiento Lógico:' }}</span>
+      @if (activeGame() === 'zeek') {
+        <span class="text-amber-200/90 ml-1">{{ t().logicGames.teacherTipZeek }} ({{ isDe() ? currentZeekLevel().hintDe : currentZeekLevel().hintEs }})</span>
+      } @else if (activeGame() === 'cables') {
+        <span class="text-cyan-200/90 ml-1">{{ t().logicGames.teacherTipCables }}</span>
+      } @else {
+        <span class="text-emerald-200/90 ml-1">{{ t().logicGames.teacherTipBoxes }}</span>
+      }
+    </div>
+  </div>
+
+  <!-- Dynamic Feedback Banner Toast -->
+  @if (bannerMessage(); as msg) {
+    <div class="px-4 py-1.5 bg-amber-500/20 border-b border-amber-500/40 text-amber-200 text-xs text-center font-medium flex items-center justify-center gap-2 animate-in fade-in duration-150">
+      <mat-icon class="text-base text-amber-400">info</mat-icon>
+      <span>{{ msg }}</span>
+    </div>
+  }
+
+  <!-- Main Game Stage -->
+  <div class="flex-1 flex flex-col items-center justify-between p-3 sm:p-4 relative overflow-y-auto">
+
+    <!-- ================================================================== -->
+    <!-- GAME 1: ZEEK THE GEEK (Retro Logic Puzzle) -->
+    <!-- ================================================================== -->
+    @if (activeGame() === 'zeek') {
+      <div class="flex flex-col items-center w-full max-w-2xl my-auto">
+        <!-- Top Stats Row -->
+        <div class="flex flex-wrap items-center justify-center gap-3 sm:gap-6 px-4 py-2 mb-3 bg-slate-900/90 border border-slate-800 rounded-2xl shadow-lg text-xs">
+          <!-- Mushrooms counter -->
+          <div class="flex items-center gap-1.5">
+            <span class="text-base">🍄</span>
+            <span class="text-slate-400">{{ t().logicGames.zeekMushrooms }}:</span>
+            <span class="font-mono font-bold text-amber-300 text-sm">
+              {{ zeekTotalMushrooms() - zeekMushroomsLeft() }} / {{ zeekTotalMushrooms() }}
+            </span>
+          </div>
+
+          <!-- Keys in bag -->
+          <div class="flex items-center gap-2">
+            @if (zeekKeysYellow() > 0) {
+              <div class="flex items-center gap-1 px-1.5 py-0.5 bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 rounded-md font-mono">
+                <span>🔑</span> <span>{{ zeekKeysYellow() }}</span>
+              </div>
+            }
+            @if (zeekKeysBlue() > 0) {
+              <div class="flex items-center gap-1 px-1.5 py-0.5 bg-blue-500/20 text-blue-300 border border-blue-500/40 rounded-md font-mono">
+                <span>🗝️</span> <span>{{ zeekKeysBlue() }}</span>
+              </div>
+            }
+          </div>
+
+          <!-- Moves counter & Par -->
+          <div class="flex items-center gap-1.5">
+            <mat-icon class="text-xs text-slate-400">directions_walk</mat-icon>
+            <span class="text-slate-400">{{ t().logicGames.zeekMoves }}:</span>
+            <span class="font-mono font-bold text-cyan-300">{{ zeekMoves() }}</span>
+            <span class="text-[10px] text-slate-500 font-mono">(Par: {{ currentZeekLevel().parMoves }})</span>
+          </div>
+
+          <!-- Score -->
+          <div class="flex items-center gap-1">
+            <mat-icon class="text-xs text-amber-400">stars</mat-icon>
+            <span class="font-mono font-bold text-amber-400">{{ zeekScore() }}</span>
+          </div>
+
+          <!-- Undo Button -->
+          <button
+            type="button"
+            (click)="undoZeek()"
+            [disabled]="zeekHistory().length === 0 || zeekWon()"
+            class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 rounded-lg border border-slate-700 text-slate-300 text-[11px] font-medium flex items-center gap-1 transition"
+          >
+            <mat-icon class="text-xs">undo</mat-icon>
+            <span>{{ t().logicGames.undoMove }}</span>
+          </button>
+        </div>
+
+        <!-- The Retro Zeek Grid Board -->
+        <div
+          class="grid gap-1 p-2.5 sm:p-3 bg-gradient-to-b from-slate-900 to-slate-950 rounded-2xl border-2 border-slate-800 shadow-[0_15px_40px_rgba(0,0,0,0.8)] relative max-w-full overflow-auto"
+          [style.grid-template-columns]="'repeat(' + currentZeekLevel().width + ', minmax(0, 1fr))'"
+        >
+          @for (cell of zeekGridCells(); track cell.x + '-' + cell.y) {
+            <div
+              class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center relative transition-all duration-100 select-none"
+              [class.bg-emerald-950/40]="cell.tile === 'floor' || cell.tile === 'mushroom' || cell.tile === 'apple' || cell.tile === 'flower'"
+              [class.border]="true"
+              [class.border-emerald-900/30]="cell.tile === 'floor' || cell.tile === 'mushroom' || cell.tile === 'apple' || cell.tile === 'flower'"
+              [class.bg-slate-800]="cell.tile === 'wall'"
+              [class.border-slate-700]="cell.tile === 'wall'"
+              [class.bg-stone-800]="cell.tile === 'cracked_wall'"
+              [class.border-stone-600]="cell.tile === 'cracked_wall'"
+              [class.bg-yellow-950/40]="cell.tile === 'door_yellow'"
+              [class.border-yellow-600/60]="cell.tile === 'door_yellow'"
+              [class.bg-blue-950/40]="cell.tile === 'door_blue'"
+              [class.border-blue-600/60]="cell.tile === 'door_blue'"
+            >
+              <!-- Wall -->
+              @if (cell.tile === 'wall') {
+                <div class="w-full h-full bg-slate-800 border-2 border-slate-700/80 rounded-md flex items-center justify-center shadow-inner">
+                  <mat-icon class="text-slate-600 text-lg opacity-40">grid_view</mat-icon>
+                </div>
+              }
+
+              <!-- Cracked Wall (can be blown up) -->
+              @if (cell.tile === 'cracked_wall') {
+                <div class="w-full h-full bg-stone-800 border-2 border-stone-600 rounded-md flex items-center justify-center relative">
+                  <mat-icon class="text-amber-500/70 text-base">texture</mat-icon>
+                  <span class="absolute text-[8px] font-bold text-amber-400/90 font-mono bottom-0.5">TNT</span>
+                </div>
+              }
+
+              <!-- Mushroom 🍄 -->
+              @if (cell.tile === 'mushroom') {
+                <div class="text-2xl animate-pulse filter drop-shadow">
+                  🍄
+                </div>
+              }
+
+              <!-- Apple 🍎 (Pushable!) -->
+              @if (cell.tile === 'apple') {
+                <div class="text-2xl filter drop-shadow-md hover:scale-105 transition-transform">
+                  🍎
+                </div>
+              }
+
+              <!-- Carnivorous Plant 🌿 (Hungry / Snapping) -->
+              @if (cell.tile === 'plant') {
+                <div class="relative flex flex-col items-center justify-center animate-bounce duration-1000">
+                  <div class="w-8 h-8 rounded-full bg-emerald-600 border-2 border-rose-500/80 flex items-center justify-center text-white shadow-md">
+                    <mat-icon class="text-rose-200 text-lg">pest_control</mat-icon>
+                  </div>
+                  <span class="absolute -bottom-1 text-[8px] bg-rose-600 text-white px-1 rounded-full font-bold">CARNÍVORA</span>
+                </div>
+              }
+
+              <!-- Sleeping Plant (Pacified after eating apple) -->
+              @if (cell.tile === 'plant_sleeping') {
+                <div class="relative flex flex-col items-center justify-center opacity-85">
+                  <div class="w-7 h-7 rounded-full bg-teal-800 border border-teal-500/50 flex items-center justify-center text-teal-300">
+                    <span class="text-sm">🌸</span>
+                  </div>
+                  <span class="text-[9px] text-teal-300 font-mono font-bold animate-pulse">Zzz</span>
+                </div>
+              }
+
+              <!-- Yellow Key -->
+              @if (cell.tile === 'key_yellow') {
+                <div class="text-xl filter drop-shadow animate-bounce">
+                  🔑
+                </div>
+              }
+
+              <!-- Yellow Door -->
+              @if (cell.tile === 'door_yellow') {
+                <div class="w-full h-full bg-yellow-600/30 border-2 border-yellow-500 rounded-md flex flex-col items-center justify-center text-yellow-300">
+                  <mat-icon class="text-lg">lock</mat-icon>
+                  <span class="text-[8px] font-bold">PUERTA</span>
+                </div>
+              }
+
+              <!-- Blue Key -->
+              @if (cell.tile === 'key_blue') {
+                <div class="text-xl filter drop-shadow animate-bounce">
+                  🗝️
+                </div>
+              }
+
+              <!-- Blue Door -->
+              @if (cell.tile === 'door_blue') {
+                <div class="w-full h-full bg-blue-600/30 border-2 border-blue-500 rounded-md flex flex-col items-center justify-center text-blue-300">
+                  <mat-icon class="text-lg">lock</mat-icon>
+                  <span class="text-[8px] font-bold">AZUL</span>
+                </div>
+              }
+
+              <!-- Bomb (TNT) -->
+              @if (cell.tile === 'bomb') {
+                <button type="button" class="relative flex flex-col items-center justify-center cursor-pointer p-0 bg-transparent border-none" (click)="detonateZeekBomb()" title="Detonar TNT">
+                  <div class="w-8 h-8 rounded-lg bg-rose-700 border-2 border-rose-400 flex items-center justify-center text-white shadow-lg animate-pulse">
+                    <span class="text-xs font-black font-mono">TNT</span>
+                  </div>
+                </button>
+              }
+
+              <!-- Boulder / Stone -->
+              @if (cell.tile === 'boulder') {
+                <div class="w-8 h-8 rounded-full bg-stone-700 border-2 border-stone-500 flex items-center justify-center shadow-md">
+                  <mat-icon class="text-stone-300 text-sm">circle</mat-icon>
+                </div>
+              }
+
+              <!-- Goal Exit Flower 🌻 -->
+              @if (cell.tile === 'flower') {
+                <div class="flex flex-col items-center justify-center text-2xl animate-spin duration-3000">
+                  🌻
+                </div>
+              }
+
+              <!-- ZEEK CHARACTER AVATAR -->
+              @if (zeekPlayer().x === cell.x && zeekPlayer().y === cell.y) {
+                <div
+                  id="zeek-player-avatar"
+                  class="absolute inset-0 flex items-center justify-center z-20 pointer-events-none transition-transform duration-150"
+                >
+                  <!-- Zeek Alien Body: Yellow alien with cute beret/antenna & eyes -->
+                  <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-amber-400 border-2 border-amber-200 shadow-[0_4px_10px_rgba(245,158,11,0.6)] flex flex-col items-center justify-center relative">
+                    <!-- Beret / Antenna -->
+                    <div class="absolute -top-2 flex items-center justify-center">
+                      <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 border border-emerald-300"></span>
+                    </div>
+                    <!-- Big Cartoon Eyes -->
+                    <div class="flex items-center gap-1.5 mt-1">
+                      <div class="w-2.5 h-3 bg-white rounded-full flex items-center justify-center overflow-hidden">
+                        <span
+                          class="w-1.5 h-1.5 bg-slate-900 rounded-full"
+                          [style.transform]="zeekPlayer().dir === 'W' ? 'translateX(-1px)' : (zeekPlayer().dir === 'E' ? 'translateX(1px)' : 'none')"
+                        ></span>
+                      </div>
+                      <div class="w-2.5 h-3 bg-white rounded-full flex items-center justify-center overflow-hidden">
+                        <span
+                          class="w-1.5 h-1.5 bg-slate-900 rounded-full"
+                          [style.transform]="zeekPlayer().dir === 'W' ? 'translateX(-1px)' : (zeekPlayer().dir === 'E' ? 'translateX(1px)' : 'none')"
+                        ></span>
+                      </div>
+                    </div>
+                    <!-- Smile -->
+                    <div class="w-2.5 h-1 border-b-2 border-amber-900 rounded-full mt-0.5"></div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Controls D-Pad (Touch & Mobile Friendly) -->
+        <div class="mt-4 flex flex-col items-center gap-1.5">
+          <!-- Up Button -->
+          <button
+            type="button"
+            (click)="moveZeek(0, -1, 'N')"
+            class="w-11 h-11 bg-slate-900 hover:bg-slate-800 active:bg-slate-700 border border-slate-700 rounded-xl flex items-center justify-center text-amber-300 shadow-md transition"
+            title="Arriba (W / ↑)"
+          >
+            <mat-icon>arrow_upward</mat-icon>
+          </button>
+
+          <!-- Middle Row: Left, Action, Right -->
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              (click)="moveZeek(-1, 0, 'W')"
+              class="w-11 h-11 bg-slate-900 hover:bg-slate-800 active:bg-slate-700 border border-slate-700 rounded-xl flex items-center justify-center text-amber-300 shadow-md transition"
+              title="Izquierda (A / ←)"
+            >
+              <mat-icon>arrow_back</mat-icon>
+            </button>
+
+            <!-- TNT Detonate Action Button -->
+            <button
+              type="button"
+              (click)="detonateZeekBomb()"
+              class="px-3 h-11 bg-rose-600/30 hover:bg-rose-600/50 active:bg-rose-600 border border-rose-500/60 rounded-xl flex items-center gap-1 text-rose-200 text-xs font-bold shadow-md transition"
+              title="Detonar TNT adyacente (Espacio)"
+            >
+              <span>🧨</span>
+              <span>Detonar</span>
+            </button>
+
+            <button
+              type="button"
+              (click)="moveZeek(1, 0, 'E')"
+              class="w-11 h-11 bg-slate-900 hover:bg-slate-800 active:bg-slate-700 border border-slate-700 rounded-xl flex items-center justify-center text-amber-300 shadow-md transition"
+              title="Derecha (D / →)"
+            >
+              <mat-icon>arrow_forward</mat-icon>
+            </button>
+          </div>
+
+          <!-- Down Button -->
+          <button
+            type="button"
+            (click)="moveZeek(0, 1, 'S')"
+            class="w-11 h-11 bg-slate-900 hover:bg-slate-800 active:bg-slate-700 border border-slate-700 rounded-xl flex items-center justify-center text-amber-300 shadow-md transition"
+            title="Abajo (S / ↓)"
+          >
+            <mat-icon>arrow_downward</mat-icon>
+          </button>
+
+          <p class="text-[11px] text-slate-500 mt-1">
+            {{ isDe() ? 'Steuerung: Pfeiltasten / WASD • U für Rückgängig • Leertaste für TNT' : 'Teclado: Flechas o WASD • Z o U para deshacer • Espacio para TNT' }}
+          </p>
+        </div>
+
+        <!-- Victory Modal / Banner -->
+        @if (zeekWon()) {
+          <div class="mt-4 p-4 bg-emerald-950/90 border-2 border-emerald-500 rounded-2xl text-center flex flex-col items-center gap-2.5 shadow-2xl animate-in zoom-in duration-200 w-full max-w-sm">
+            <div class="text-3xl">🎉 🍄 🌟</div>
+            <div class="text-emerald-300 font-bold text-sm">
+              {{ t().logicGames.zeekWin }}
+            </div>
+            <div class="flex items-center gap-2 text-xs text-slate-300">
+              <span>{{ isDe() ? 'Züge' : 'Movimientos' }}: <strong class="text-emerald-400 font-mono">{{ zeekMoves() }}</strong></span>
+              <span>•</span>
+              <span>Punkte: <strong class="text-amber-400 font-mono">{{ zeekScore() }}</strong></span>
+            </div>
+
+            @if (currentLevelId() < ZEEK_LEVELS.length) {
+              <button
+                type="button"
+                (click)="selectLevel(currentLevelId() + 1)"
+                class="px-5 py-2 bg-gradient-to-r from-emerald-600 to-amber-600 hover:from-emerald-500 hover:to-amber-500 text-white text-xs font-bold rounded-xl shadow-lg transition-transform hover:scale-105"
+              >
+                {{ t().logicGames.nextLevel }} →
+              </button>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ================================================================== -->
+    <!-- GAME 2: CAMINOS DIGITALES (Cables) -->
+    <!-- ================================================================== -->
+    @if (activeGame() === 'cables') {
+      <div class="flex flex-col items-center w-full max-w-2xl my-auto">
+        <p class="text-xs text-cyan-300/90 mb-3 text-center px-4">
+          {{ isDe() ? 'Klicke auf die Kabelstücke, um sie um 90° zu drehen. Verbinde das Signal vom grünen Hauptserver zum blauen Client!' : 'Haz clic en las piezas de cable para rotarlas 90°. Conecta la señal desde el servidor verde hasta el cliente azul.' }}
+        </p>
+
+        <!-- Cable Grid -->
+        <div
+          class="grid gap-2 p-3 bg-slate-900/90 rounded-2xl border border-slate-800 shadow-2xl relative"
+          [style.grid-template-columns]="'repeat(' + currentCableLevel().gridSize + ', minmax(0, 1fr))'"
+        >
+          @for (tile of cableTiles(); track tile.x + '-' + tile.y) {
+            <button
+              type="button"
+              [id]="'tile-' + tile.x + '-' + tile.y"
+              (click)="rotateTile(tile)"
+              [disabled]="tile.shape === 'start' || tile.shape === 'goal'"
+              class="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-slate-850 border flex items-center justify-center relative transition-all duration-200"
+              [class.border-cyan-500]="tile.isPowered"
+              [class.shadow-lg]="tile.isPowered"
+              [class.shadow-cyan-500/30]="tile.isPowered"
+              [class.border-slate-700]="!tile.isPowered"
+              [class.hover:bg-slate-800]="tile.shape !== 'start' && tile.shape !== 'goal'"
+            >
+              <!-- SVG Cable Path -->
+              <svg
+                class="w-12 h-12 transition-transform duration-300"
+                [style.transform]="'rotate(' + tile.rotation + 'deg)'"
+                viewBox="0 0 100 100"
+              >
+                @switch (tile.shape) {
+                  @case ('line') {
+                    <line x1="10" y1="50" x2="90" y2="50" [attr.stroke]="tile.isPowered ? '#06b6d4' : '#64748b'" stroke-width="14" stroke-linecap="round" />
+                    @if (tile.isPowered) {
+                      <line x1="15" y1="50" x2="85" y2="50" stroke="#a5f3fc" stroke-width="4" stroke-linecap="round" />
+                    }
+                  }
+                  @case ('corner') {
+                    <path d="M 50 10 L 50 50 L 90 50" fill="none" [attr.stroke]="tile.isPowered ? '#06b6d4' : '#64748b'" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" />
+                    @if (tile.isPowered) {
+                      <path d="M 50 15 L 50 50 L 85 50" fill="none" stroke="#a5f3fc" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+                    }
+                  }
+                  @case ('t') {
+                    <line x1="10" y1="50" x2="90" y2="50" [attr.stroke]="tile.isPowered ? '#06b6d4' : '#64748b'" stroke-width="14" stroke-linecap="round" />
+                    <line x1="50" y1="50" x2="50" y2="90" [attr.stroke]="tile.isPowered ? '#06b6d4' : '#64748b'" stroke-width="14" stroke-linecap="round" />
+                    @if (tile.isPowered) {
+                      <line x1="15" y1="50" x2="85" y2="50" stroke="#a5f3fc" stroke-width="4" stroke-linecap="round" />
+                      <line x1="50" y1="50" x2="50" y2="85" stroke="#a5f3fc" stroke-width="4" stroke-linecap="round" />
+                    }
+                  }
+                  @case ('cross') {
+                    <line x1="10" y1="50" x2="90" y2="50" [attr.stroke]="tile.isPowered ? '#06b6d4' : '#64748b'" stroke-width="14" stroke-linecap="round" />
+                    <line x1="50" y1="10" x2="50" y2="90" [attr.stroke]="tile.isPowered ? '#06b6d4' : '#64748b'" stroke-width="14" stroke-linecap="round" />
+                    @if (tile.isPowered) {
+                      <line x1="15" y1="50" x2="85" y2="50" stroke="#a5f3fc" stroke-width="4" stroke-linecap="round" />
+                      <line x1="50" y1="15" x2="50" y2="85" stroke="#a5f3fc" stroke-width="4" stroke-linecap="round" />
+                    }
+                  }
+                  @case ('start') {
+                    <circle cx="50" cy="50" r="30" fill="#10b981" />
+                    <line x1="50" y1="50" x2="90" y2="50" stroke="#10b981" stroke-width="14" stroke-linecap="round" />
+                  }
+                  @case ('goal') {
+                    <circle cx="50" cy="50" r="30" [attr.fill]="cablesWon() ? '#06b6d4' : '#334155'" />
+                    <line x1="10" y1="50" x2="50" y2="50" [attr.stroke]="cablesWon() ? '#06b6d4' : '#334155'" stroke-width="14" stroke-linecap="round" />
+                  }
+                }
+              </svg>
+
+              @if (tile.shape === 'start') {
+                <span class="absolute inset-0 flex items-center justify-center text-white pointer-events-none">
+                  <mat-icon class="text-xl">dns</mat-icon>
+                </span>
+              }
+              @if (tile.shape === 'goal') {
+                <span class="absolute inset-0 flex items-center justify-center text-white pointer-events-none">
+                  <mat-icon class="text-xl">computer</mat-icon>
+                </span>
+              }
+            </button>
+          }
+        </div>
+
+        <!-- Cable Test Signal Button -->
+        <div class="mt-4 flex items-center gap-2">
+          <button
+            type="button"
+            (click)="triggerSignalPulse()"
+            [disabled]="isTestingSignal()"
+            class="px-4 py-2 bg-cyan-600/30 hover:bg-cyan-600/50 text-cyan-300 border border-cyan-500/40 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shadow"
+          >
+            <mat-icon class="text-sm">bolt</mat-icon>
+            <span>{{ isTestingSignal() ? 'Enviando pulso...' : 'Probar señal de red' }}</span>
+          </button>
+        </div>
+
+        <!-- Win Banner -->
+        @if (cablesWon()) {
+          <div class="mt-4 p-4 bg-cyan-950/90 border border-cyan-500/60 rounded-2xl text-center flex flex-col items-center gap-2.5 shadow-2xl animate-in zoom-in duration-200">
+            <div class="flex items-center gap-2 text-cyan-300 font-bold text-sm">
+              <mat-icon class="text-cyan-400">check_circle</mat-icon>
+              <span>{{ t().logicGames.cablesWin }}</span>
+            </div>
+            @if (currentLevelId() < CABLE_LEVELS.length) {
+              <button
+                type="button"
+                (click)="selectLevel(currentLevelId() + 1)"
+                class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold rounded-xl shadow transition"
+              >
+                {{ t().logicGames.nextLevel }} →
+              </button>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ================================================================== -->
+    <!-- GAME 3: ALMACÉN DE DATOS (Sokoban) -->
+    <!-- ================================================================== -->
+    @if (activeGame() === 'boxes') {
+      <div class="flex flex-col items-center w-full max-w-2xl my-auto">
+        <!-- Stats -->
+        <div class="flex items-center gap-4 text-xs text-slate-300 mb-3 px-4 py-1.5 bg-slate-900 border border-slate-800 rounded-xl shadow">
+          <span>{{ isDe() ? 'Züge' : 'Movimientos' }}: <strong class="text-emerald-400 font-mono">{{ boxMoves() }}</strong> (Par: {{ currentBoxLevel().parMoves }})</span>
+          <span>•</span>
+          <span>{{ isDe() ? 'Kisten im Ziel' : 'Cajas guardadas' }}: <strong class="text-amber-400 font-mono">{{ boxesOnGoalCount() }} / {{ currentBoxLevel().goals.length }}</strong></span>
+          <button
+            type="button"
+            (click)="undoBoxMove()"
+            [disabled]="boxHistory().length === 0"
+            class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 rounded border border-slate-700 text-[11px] flex items-center gap-1"
+          >
+            <mat-icon class="text-xs">undo</mat-icon>
+            <span>{{ t().logicGames.undoMove }}</span>
+          </button>
+        </div>
+
+        <!-- Sokoban Grid -->
+        <div
+          class="grid gap-1 p-3 bg-slate-900 rounded-2xl border border-slate-800 shadow-2xl"
+          [style.grid-template-columns]="'repeat(' + currentBoxLevel().width + ', minmax(0, 1fr))'"
+        >
+          @for (cell of boxGridCells(); track cell.x + '-' + cell.y) {
+            <div
+              class="w-11 h-11 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center relative transition-all"
+              [class.bg-slate-800]="cell.type === 'floor'"
+              [class.bg-slate-700]="cell.type === 'wall'"
+              [class.border]="true"
+              [class.border-slate-700/60]="cell.type === 'floor'"
+              [class.border-slate-600]="cell.type === 'wall'"
+            >
+              <!-- Target Storage Slot -->
+              @if (cell.isGoal) {
+                <div class="w-6 h-6 rounded-full border-2 border-dashed border-emerald-400/80 bg-emerald-500/20 flex items-center justify-center">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                </div>
+              }
+
+              <!-- Wall -->
+              @if (cell.type === 'wall') {
+                <mat-icon class="text-slate-500 text-lg opacity-40">grid_view</mat-icon>
+              }
+
+              <!-- Memory Crate / Box -->
+              @if (cell.hasBox) {
+                <div
+                  class="absolute inset-1 rounded-md flex items-center justify-center shadow-md transition-all duration-150"
+                  [class.bg-amber-600]="!cell.isGoal"
+                  [class.border-amber-400]="!cell.isGoal"
+                  [class.bg-emerald-600]="cell.isGoal"
+                  [class.border-emerald-300]="cell.isGoal"
+                  [class.border-2]="true"
+                >
+                  <mat-icon class="text-white text-base">inventory_2</mat-icon>
+                </div>
+              }
+
+              <!-- Player Robot Chip -->
+              @if (boxPlayer().x === cell.x && boxPlayer().y === cell.y) {
+                <div class="absolute inset-1 bg-cyan-600 text-white rounded-md border-2 border-cyan-300 shadow flex items-center justify-center z-10 animate-pulse">
+                  <mat-icon class="text-base">smart_toy</mat-icon>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- D-Pad Controls -->
+        <div class="mt-4 flex flex-col items-center gap-1">
+          <button
+            type="button"
+            (click)="moveBoxPlayer(0, -1)"
+            class="w-10 h-10 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg flex items-center justify-center text-slate-200 transition"
+          >
+            <mat-icon>arrow_upward</mat-icon>
+          </button>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              (click)="moveBoxPlayer(-1, 0)"
+              class="w-10 h-10 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg flex items-center justify-center text-slate-200 transition"
+            >
+              <mat-icon>arrow_back</mat-icon>
+            </button>
+            <button
+              type="button"
+              (click)="moveBoxPlayer(0, 1)"
+              class="w-10 h-10 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg flex items-center justify-center text-slate-200 transition"
+            >
+              <mat-icon>arrow_downward</mat-icon>
+            </button>
+            <button
+              type="button"
+              (click)="moveBoxPlayer(1, 0)"
+              class="w-10 h-10 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg flex items-center justify-center text-slate-200 transition"
+            >
+              <mat-icon>arrow_forward</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <!-- Box Win Banner -->
+        @if (boxesWon()) {
+          <div class="mt-4 p-4 bg-emerald-950/90 border border-emerald-500/60 rounded-2xl text-center flex flex-col items-center gap-2 animate-in zoom-in duration-200">
+            <div class="flex items-center gap-2 text-emerald-300 font-bold text-sm">
+              <mat-icon class="text-emerald-400">check_circle</mat-icon>
+              <span>{{ t().logicGames.boxesWin }}</span>
+            </div>
+            @if (currentLevelId() < BOX_LEVELS.length) {
+              <button
+                type="button"
+                (click)="selectLevel(currentLevelId() + 1)"
+                class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow transition"
+              >
+                {{ t().logicGames.nextLevel }} →
+              </button>
+            }
+          </div>
+        }
+      </div>
+    }
+
+  </div>
+</div>

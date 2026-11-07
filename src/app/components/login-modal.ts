@@ -4,7 +4,6 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { ClassroomService } from '../services/classroom.service';
 import { I18nService } from '../services/i18n.service';
@@ -12,7 +11,7 @@ import { I18nService } from '../services/i18n.service';
 @Component({
   selector: 'app-login-modal',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatIconModule, FormsModule],
+  imports: [MatIconModule],
   template: `
     <div
       id="login-screen-overlay"
@@ -105,7 +104,8 @@ import { I18nService } from '../services/i18n.service';
               <input
                 id="input-room-code"
                 type="text"
-                [(ngModel)]="studentRoomCode"
+                [value]="studentRoomCode()"
+                (input)="studentRoomCode.set($any($event.target).value)"
                 [placeholder]="t().login.roomCodePlaceholder"
                 class="w-full px-3.5 py-2.5 rounded-xl bg-[#0c0e14] border border-zinc-700/80 text-sm font-mono tracking-wider uppercase text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400/40 shadow-inner"
               />
@@ -118,7 +118,8 @@ import { I18nService } from '../services/i18n.service';
               <input
                 id="input-student-name"
                 type="text"
-                [(ngModel)]="studentName"
+                [value]="studentName()"
+                (input)="studentName.set($any($event.target).value)"
                 [placeholder]="t().login.studentNamePlaceholder"
                 class="w-full px-3.5 py-2.5 rounded-xl bg-[#0c0e14] border border-zinc-700/80 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400/40 shadow-inner"
                 (keydown.enter)="joinAsStudent()"
@@ -149,7 +150,8 @@ import { I18nService } from '../services/i18n.service';
               <input
                 id="input-class-name"
                 type="text"
-                [(ngModel)]="teacherClassName"
+                [value]="teacherClassName()"
+                (input)="teacherClassName.set($any($event.target).value)"
                 [placeholder]="t().login.classNamePlaceholder"
                 class="w-full px-3.5 py-2.5 rounded-xl bg-[#0c0e14] border border-zinc-700/80 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400/40 shadow-inner"
               />
@@ -162,7 +164,8 @@ import { I18nService } from '../services/i18n.service';
               <input
                 id="input-teacher-name"
                 type="text"
-                [(ngModel)]="teacherName"
+                [value]="teacherName()"
+                (input)="teacherName.set($any($event.target).value)"
                 [placeholder]="t().login.teacherNamePlaceholder"
                 class="w-full px-3.5 py-2.5 rounded-xl bg-[#0c0e14] border border-zinc-700/80 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400/40 shadow-inner"
                 (keydown.enter)="createAsTeacher()"
@@ -237,11 +240,11 @@ export class LoginModal {
   readonly loading = signal<boolean>(false);
   readonly errorMessage = signal<string>('');
 
-  studentRoomCode = 'INF-101';
-  studentName = 'Lukas';
+  readonly studentRoomCode = signal<string>('INF-101');
+  readonly studentName = signal<string>('Lukas');
 
-  teacherClassName = 'Informatik Klasse 6b';
-  teacherName = 'Frau Weber';
+  readonly teacherClassName = signal<string>('Informatik Klasse 6b');
+  readonly teacherName = signal<string>('Frau Weber');
 
   toggleLanguage(): void {
     const next = this.i18n.currentLang() === 'de' ? 'es' : 'de';
@@ -250,12 +253,16 @@ export class LoginModal {
 
   startOfflineSession(): void {
     const isTeacher = this.activeTab() === 'teacher';
-    const name = isTeacher ? (this.teacherName.trim() || 'Frau Weber') : (this.studentName.trim() || 'Lukas');
+    const name = isTeacher
+      ? (this.teacherName().trim() || 'Frau Weber')
+      : (this.studentName().trim() || 'Lukas');
     this.classroom.startStandaloneSession(isTeacher ? 'teacher' : 'student', name);
   }
 
   async joinAsStudent(): Promise<void> {
-    if (!this.studentRoomCode.trim() || !this.studentName.trim()) {
+    const code = this.studentRoomCode().trim();
+    const name = this.studentName().trim();
+    if (!code || !name) {
       this.errorMessage.set('Bitte gib den Klassen-Code und deinen Vornamen ein.');
       return;
     }
@@ -263,7 +270,7 @@ export class LoginModal {
     this.loading.set(true);
     this.errorMessage.set('');
 
-    const res = await this.classroom.joinClassroom(this.studentRoomCode, this.studentName);
+    const res = await this.classroom.joinClassroom(code, name);
     this.loading.set(false);
 
     if (!res.success) {
@@ -272,7 +279,9 @@ export class LoginModal {
   }
 
   async createAsTeacher(): Promise<void> {
-    if (!this.teacherClassName.trim() || !this.teacherName.trim()) {
+    const cName = this.teacherClassName().trim();
+    const tName = this.teacherName().trim();
+    if (!cName || !tName) {
       this.errorMessage.set('Bitte gib einen Klassen- und Lehrkraftnamen ein.');
       return;
     }
@@ -280,7 +289,7 @@ export class LoginModal {
     this.loading.set(true);
     this.errorMessage.set('');
 
-    const res = await this.classroom.createClassroom(this.teacherClassName, this.teacherName);
+    const res = await this.classroom.createClassroom(cName, tName);
     this.loading.set(false);
 
     if (!res.success) {
@@ -289,19 +298,18 @@ export class LoginModal {
   }
 
   async quickStartTeacher(): Promise<void> {
-    this.teacherClassName = 'Informatik Klasse 6b';
-    this.teacherName = 'Frau Weber';
+    this.teacherClassName.set('Informatik Klasse 6b');
+    this.teacherName.set('Frau Weber');
     await this.createAsTeacher();
   }
 
   async quickStartStudent(): Promise<void> {
-    this.studentRoomCode = 'INF-101';
-    this.studentName = 'Lukas';
-    // If INF-101 room doesn't exist yet, we create it first or try to join
+    this.studentRoomCode.set('INF-101');
+    this.studentName.set('Lukas');
     const res = await this.classroom.joinClassroom('INF-101', 'Lukas');
     if (!res.success) {
-      // Create first as teacher in background, then join
       await this.classroom.createClassroom('Informatik 6b', 'Frau Weber');
+      await this.classroom.joinClassroom('INF-101', 'Lukas');
     }
   }
 }

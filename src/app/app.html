@@ -77,7 +77,7 @@
           <app-coding-app />
         }
         @case ('logic-games') {
-          <app-logic-games />
+          <app-logic-games [initialGame]="getInitialGame(win.params)" />
         }
         @case ('groups-wall') {
           <app-groups-wall />

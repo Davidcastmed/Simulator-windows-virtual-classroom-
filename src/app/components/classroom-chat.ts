@@ -5,9 +5,9 @@ import {
   ElementRef,
   computed,
   inject,
+  signal,
   viewChild,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import type { ChatMessage } from '../models/classroom.types';
 import { ClassroomService } from '../services/classroom.service';
@@ -18,7 +18,7 @@ const QUICK_EMOJIS = ['👋', '⭐', '💡', '🚀', '👏', '❤️', '🙋‍�
 @Component({
   selector: 'app-classroom-chat',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatIconModule, FormsModule],
+  imports: [MatIconModule],
   template: `
     <div id="classroom-chat-container" class="flex flex-col h-full w-full bg-slate-900 text-slate-100 select-none overflow-hidden">
       <!-- Top Header & Didactic Banner -->
@@ -193,13 +193,14 @@ const QUICK_EMOJIS = ['👋', '⭐', '💡', '🚀', '👏', '❤️', '🙋‍�
 
       <!-- Input Bar -->
       <form
-        (ngSubmit)="onSendMessage()"
+        (submit)="$event.preventDefault(); onSendMessage()"
         class="p-3 bg-slate-850 border-t border-slate-800 flex items-center gap-2 shrink-0"
       >
         <input
           type="text"
           name="chatText"
-          [(ngModel)]="draftText"
+          [value]="draftText()"
+          (input)="draftText.set($any($event.target).value)"
           [placeholder]="t().classroomChat.placeholder"
           class="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
           autocomplete="off"
@@ -208,7 +209,7 @@ const QUICK_EMOJIS = ['👋', '⭐', '💡', '🚀', '👏', '❤️', '🙋‍�
         <button
           type="submit"
           id="btn-send-message"
-          [disabled]="!draftText.trim()"
+          [disabled]="!draftText().trim()"
           class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:hover:bg-blue-600 text-white font-medium text-xs flex items-center gap-1.5 shadow-sm transition-all active:scale-95"
         >
           <mat-icon class="text-base !w-4 !h-4 flex items-center justify-center">send</mat-icon>
@@ -224,7 +225,7 @@ export class ClassroomChatComponent implements AfterViewChecked {
 
   readonly messagesContainer = viewChild<ElementRef<HTMLDivElement>>('messagesContainer');
 
-  draftText = '';
+  readonly draftText = signal<string>('');
   readonly quickEmojis = QUICK_EMOJIS;
 
   readonly t = computed(() => this.i18n.t());
@@ -254,10 +255,10 @@ export class ClassroomChatComponent implements AfterViewChecked {
   }
 
   async onSendMessage(): Promise<void> {
-    const text = this.draftText.trim();
+    const text = this.draftText().trim();
     if (!text) return;
 
-    this.draftText = '';
+    this.draftText.set('');
     this.shouldScroll = true;
     await this.classroomService.sendChatMessage(text, 'text');
   }

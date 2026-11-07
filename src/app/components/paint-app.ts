@@ -10,7 +10,6 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import type { VirtualItem } from '../models/classroom.types';
 import { ActivityTrackerService } from '../services/activity-tracker.service';
@@ -30,7 +29,7 @@ const LOCAL_DRAFT_KEY = 'klassendesktop_paint_draft';
 @Component({
   selector: 'app-paint-app',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatIconModule, FormsModule],
+  imports: [MatIconModule],
   template: `
     <div id="paint-app-container" class="flex flex-col h-full w-full bg-slate-900 text-slate-100 select-none relative overflow-hidden">
       <!-- Toast Feedback Notification -->
@@ -430,7 +429,8 @@ const LOCAL_DRAFT_KEY = 'klassendesktop_paint_draft';
                   <input
                     id="save-filename-input"
                     type="text"
-                    [(ngModel)]="saveFileName"
+                    [value]="saveFileName()"
+                    (input)="saveFileName.set($any($event.target).value)"
                     class="w-full h-11 sm:h-10 px-3 pr-12 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 focus:outline-none focus:border-blue-500 font-medium text-sm sm:text-xs"
                     placeholder="z.B. Mein Haus"
                   />
@@ -445,7 +445,8 @@ const LOCAL_DRAFT_KEY = 'klassendesktop_paint_draft';
                 </label>
                 <select
                   id="save-folder-select"
-                  [(ngModel)]="saveFolderPath"
+                  [value]="saveFolderPath()"
+                  (change)="saveFolderPath.set($any($event.target).value)"
                   class="w-full h-11 sm:h-10 px-3 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 focus:outline-none focus:border-blue-500 text-sm sm:text-xs"
                 >
                   @for (folder of availableFolders(); track folder.path) {
@@ -507,7 +508,8 @@ const LOCAL_DRAFT_KEY = 'klassendesktop_paint_draft';
               <input
                 id="text-tool-input"
                 type="text"
-                [(ngModel)]="textToInsert"
+                [value]="textToInsert()"
+                (input)="textToInsert.set($any($event.target).value)"
                 (keyup.enter)="confirmInsertText()"
                 class="w-full h-11 px-3 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 focus:outline-none focus:border-blue-500 font-medium text-sm"
                 [placeholder]="isDe() ? 'z.B. Mein Kunstwerk' : 'p. ej. Mi obra de arte'"
@@ -613,9 +615,9 @@ export class PaintApp implements AfterViewInit, OnDestroy {
   readonly showTextModal = signal<boolean>(false);
   readonly toastMessage = signal<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
 
-  saveFileName = 'Mein Haus';
-  saveFolderPath = '';
-  textToInsert = '';
+  readonly saveFileName = signal<string>('Mein Haus');
+  readonly saveFolderPath = signal<string>('');
+  readonly textToInsert = signal<string>('');
   private textTargetX = 40;
   private textTargetY = 40;
 
@@ -677,9 +679,9 @@ export class PaintApp implements AfterViewInit, OnDestroy {
     if (file && file.content) {
       this.loadImageOntoCanvas(file.content);
       this.currentSavedFile.set(file);
-      this.saveFileName = file.name.replace(/\.png$/i, '');
+      this.saveFileName.set(file.name.replace(/\.png$/i, ''));
       const parent = file.path.substring(0, file.path.lastIndexOf('/'));
-      this.saveFolderPath = parent;
+      this.saveFolderPath.set(parent);
     } else {
       // Check for local auto-draft
       this.checkLocalDraft();
@@ -804,11 +806,11 @@ export class PaintApp implements AfterViewInit, OnDestroy {
     const dibujosFolder = `/Klasse/${user.name}/Mis dibujos`;
 
     if (room.files[drawingsFolder]) {
-      this.saveFolderPath = drawingsFolder;
+      this.saveFolderPath.set(drawingsFolder);
     } else if (room.files[dibujosFolder]) {
-      this.saveFolderPath = dibujosFolder;
+      this.saveFolderPath.set(dibujosFolder);
     } else {
-      this.saveFolderPath = `/Klasse/${user.name}`;
+      this.saveFolderPath.set(`/Klasse/${user.name}`);
     }
   }
 
@@ -1032,7 +1034,7 @@ export class PaintApp implements AfterViewInit, OnDestroy {
   private openTextModal(x: number, y: number): void {
     this.textTargetX = x;
     this.textTargetY = y;
-    this.textToInsert = '';
+    this.textToInsert.set('');
     this.showTextModal.set(true);
   }
 
@@ -1041,7 +1043,7 @@ export class PaintApp implements AfterViewInit, OnDestroy {
   }
 
   confirmInsertText(): void {
-    const text = this.textToInsert.trim();
+    const text = this.textToInsert().trim();
     if (text) {
       this.ctx.fillStyle = this.currentColor();
       this.ctx.font = `${Math.max(16, this.strokeWidth() * 4)}px sans-serif`;
@@ -1112,13 +1114,13 @@ export class PaintApp implements AfterViewInit, OnDestroy {
   }
 
   async confirmSaveFile(): Promise<void> {
-    const fileName = this.saveFileName.trim();
+    const fileName = this.saveFileName().trim();
     if (!fileName) {
       this.showToast(this.t().explorer.nameEmpty, 'error');
       return;
     }
 
-    const folder = this.saveFolderPath;
+    const folder = this.saveFolderPath();
     if (!folder) {
       this.showToast(this.isDe() ? 'Bitte wähle einen Ordner aus.' : 'Por favor elige una carpeta.', 'error');
       return;

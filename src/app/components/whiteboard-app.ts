@@ -10,7 +10,6 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import type { WhiteboardPoint } from '../models/classroom.types';
 import { ClassroomService } from '../services/classroom.service';
@@ -33,7 +32,7 @@ const STAMPS = ['⭐', '💡', '🚀', '🎓', '❤️', '✅', '🏆', '👏', 
 @Component({
   selector: 'app-whiteboard-app',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatIconModule, FormsModule],
+  imports: [MatIconModule],
   template: `
     <div id="whiteboard-container" class="flex flex-col h-full w-full bg-slate-950 text-slate-100 select-none overflow-hidden">
       <!-- Toolbar -->
