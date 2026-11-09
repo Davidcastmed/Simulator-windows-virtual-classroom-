@@ -12,6 +12,7 @@ import type {
   WhiteboardStamp,
   WhiteboardStroke,
 } from '../models/classroom.types';
+import { FirebaseService } from './firebase.service';
 
 const STORAGE_SESSION_KEY = 'klassendesktop_session';
 const STORAGE_ROOM_KEY = 'klassendesktop_room_code';
@@ -22,6 +23,7 @@ const STORAGE_ROOM_STATE_KEY = 'klassendesktop_room_state';
 })
 export class ClassroomService {
   private readonly http = inject(HttpClient);
+  readonly firebase = inject(FirebaseService);
 
   readonly currentUser = signal<UserSession | null>(null);
   readonly classroom = signal<ClassroomState | null>(null);
@@ -49,16 +51,80 @@ export class ClassroomService {
     return room.observingStudentId === user.id;
   });
 
-  readonly students = computed(() => this.classroom()?.students || []);
-  readonly groups = computed(() => this.classroom()?.groups || []);
+  readonly students = computed(() => {
+    const room = this.classroom();
+    const currentGrp = this.firebase.currentGroup();
+    if (currentGrp && currentGrp.members) {
+      const studentMembers = currentGrp.members.filter((m) => m.role === 'student');
+      if (studentMembers.length > 0) {
+        return studentMembers.map((m) => {
+          const existing = (room?.students || []).find((s) => s.id === m.id || s.name === m.name);
+          return (
+            existing || {
+              id: m.id,
+              name: m.name,
+              role: 'student' as const,
+              roomCode: currentGrp.code,
+              connectedAt: currentGrp.createdAt,
+              lastActive: Date.now(),
+              currentApp: 'explorer',
+              activityDetail: 'Informatik Klasse 6b',
+              taskProgress: 1,
+            }
+          );
+        });
+      }
+    }
+    return room?.students || [];
+  });
+
+  readonly groups = computed(() => {
+    const fbGroups = this.firebase.activeGroups();
+    const fbNotes = this.firebase.activeNotes();
+    if (fbGroups.length > 0) {
+      return fbGroups.map((g) => ({
+        id: g.id,
+        name: g.name,
+        icon: g.icon,
+        color: g.color,
+        creatorId: g.teacherId,
+        creatorName: g.teacherName,
+        members: (g.members || []).map((m) => ({ id: m.id, name: m.name })),
+        notes: (fbNotes || [])
+          .filter((n) => n.groupId === g.id || n.groupId === g.code)
+          .map((n) => ({ id: n.id, author: n.authorName, text: n.text, timestamp: n.createdAt })),
+        folderPath: `/Klasse/Gruppen/${g.name}`,
+        createdAt: g.createdAt,
+      }));
+    }
+    return this.classroom()?.groups || [];
+  });
+
   readonly reactions = computed(() => this.classroom()?.reactions || []);
+  readonly currentGroup = computed(() => this.firebase.currentGroup());
+
   readonly myGroup = computed(() => {
     const me = this.currentUser();
     if (!me) return null;
     return this.groups().find((g) => g.members.some((m) => m.id === me.id)) || null;
   });
 
-  readonly chatMessages = computed(() => this.classroom()?.chatMessages || []);
+  readonly chatMessages = computed(() => {
+    const fbMsgs = this.firebase.activeMessages();
+    if (fbMsgs.length > 0) {
+      return fbMsgs.map((m) => ({
+        id: m.id,
+        senderId: m.senderId,
+        senderName: m.senderName,
+        senderRole: m.senderRole,
+        text: m.text,
+        timestamp: m.timestamp,
+        type: m.type,
+        emoji: m.emoji,
+      }));
+    }
+    return this.classroom()?.chatMessages || [];
+  });
   readonly whiteboardStrokes = computed(() => this.classroom()?.whiteboardStrokes || []);
   readonly whiteboardStamps = computed(() => this.classroom()?.whiteboardStamps || []);
 
@@ -183,6 +249,17 @@ export class ClassroomService {
     }
   }
 
+  private connectFirestoreSync(code: string): void {
+    if (typeof window === 'undefined') return;
+    try {
+      this.firebase.subscribeToGroups();
+      this.firebase.subscribeToGroupMessages(code);
+      this.firebase.subscribeToCollaboration(code);
+    } catch (e) {
+      console.warn('Could not connect Firestore sync:', e);
+    }
+  }
+
   startStandaloneSession(role: UserRole = 'student', name?: string): { room: ClassroomState; user: UserSession } {
     const userName = name || (role === 'teacher' ? 'Frau Weber' : 'Lukas');
     const code = role === 'teacher' ? `INF-${Math.floor(100 + Math.random() * 900)}` : 'INF-101';
@@ -196,6 +273,7 @@ export class ClassroomService {
     this.classroom.set(fallback.room);
     this.saveSessionToStorage(fallback.user, fallback.room.code);
     this.saveRoomStateToStorage(fallback.room);
+    this.connectFirestoreSync(fallback.room.code);
     this.connectionStatus.set('local');
     this.syncStatus.set('saved');
     return fallback;
@@ -217,6 +295,7 @@ export class ClassroomService {
         this.saveSessionToStorage(res.teacher, res.code);
         this.saveRoomStateToStorage(res.room);
         this.connectEventStream(res.code);
+        this.connectFirestoreSync(res.code);
         this.startHeartbeat();
         this.syncStatus.set('saved');
         return { success: true };
@@ -232,6 +311,7 @@ export class ClassroomService {
       this.classroom.set(fallback.room);
       this.saveSessionToStorage(fallback.user, fallback.room.code);
       this.saveRoomStateToStorage(fallback.room);
+      this.connectFirestoreSync(fallback.room.code);
       this.connectionStatus.set('local');
       this.syncStatus.set('saved');
       return { success: true };
@@ -247,6 +327,7 @@ export class ClassroomService {
       this.classroom.set(fallback.room);
       this.saveSessionToStorage(fallback.user, fallback.room.code);
       this.saveRoomStateToStorage(fallback.room);
+      this.connectFirestoreSync(fallback.room.code);
       this.connectionStatus.set('local');
       this.syncStatus.set('saved');
       return { success: true };
@@ -269,6 +350,7 @@ export class ClassroomService {
         this.saveSessionToStorage(res.student, res.code);
         this.saveRoomStateToStorage(res.room);
         this.connectEventStream(res.code);
+        this.connectFirestoreSync(res.code);
         this.startHeartbeat();
         this.syncStatus.set('saved');
         return { success: true };
@@ -284,6 +366,7 @@ export class ClassroomService {
       this.classroom.set(fallback.room);
       this.saveSessionToStorage(fallback.user, fallback.room.code);
       this.saveRoomStateToStorage(fallback.room);
+      this.connectFirestoreSync(fallback.room.code);
       this.connectionStatus.set('local');
       this.syncStatus.set('saved');
       return { success: true };
@@ -299,6 +382,7 @@ export class ClassroomService {
       this.classroom.set(fallback.room);
       this.saveSessionToStorage(fallback.user, fallback.room.code);
       this.saveRoomStateToStorage(fallback.room);
+      this.connectFirestoreSync(fallback.room.code);
       this.connectionStatus.set('local');
       this.syncStatus.set('saved');
       return { success: true };
@@ -1238,6 +1322,20 @@ export class ClassroomService {
     };
 
     try {
+      await this.firebase.createGroup(
+        name,
+        room.code,
+        user.id,
+        user.name,
+        [],
+        icon,
+        color,
+      );
+    } catch (e) {
+      console.warn('Firestore createGroup error:', e);
+    }
+
+    try {
       await this.http
         .post(`/api/classroom/${room.code}/groups/create`, {
           name,
@@ -1266,6 +1364,12 @@ export class ClassroomService {
     const user = this.currentUser();
     const room = this.classroom();
     if (!user || !room) return false;
+
+    try {
+      await this.firebase.addStudentToGroup(groupId, user.id, user.name);
+    } catch (e) {
+      console.warn('Firestore addStudentToGroup error:', e);
+    }
 
     try {
       await this.http
@@ -1398,6 +1502,7 @@ export class ClassroomService {
     currentApp?: string,
     activityDetail?: string,
     thumbnail?: string,
+    screenSnapshot?: string,
   ): Promise<void> {
     const user = this.currentUser();
     const room = this.classroom();
@@ -1410,6 +1515,7 @@ export class ClassroomService {
           currentApp,
           activityDetail,
           thumbnail,
+          screenSnapshot,
         })
         .toPromise();
     } catch {
@@ -1453,6 +1559,20 @@ export class ClassroomService {
       emoji,
       timestamp: Date.now(),
     };
+
+    try {
+      await this.firebase.sendInstantMessage(
+        room.code,
+        user.id,
+        user.name,
+        user.role,
+        text,
+        type,
+        emoji,
+      );
+    } catch (e) {
+      console.warn('Firestore instant message error:', e);
+    }
 
     try {
       await this.http

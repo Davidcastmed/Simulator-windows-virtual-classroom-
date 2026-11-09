@@ -220,6 +220,22 @@ import { WindowManagerService } from '../services/window-manager.service';
               <div class="text-[10px] text-zinc-400">{{ t().startMenu.teacherDashboardSub }}</div>
             </div>
           </button>
+
+          <!-- Student Screen Monitor (Teacher) -->
+          <button
+            id="start-app-screen-monitor"
+            type="button"
+            class="w-full p-2 rounded-xl flex items-center gap-3 hover:bg-zinc-800/80 border border-transparent hover:border-zinc-700/60 transition-colors text-left"
+            (click)="openApp('screen-monitor')"
+          >
+            <div class="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-300 flex items-center justify-center border border-sky-500/30">
+              <mat-icon class="text-lg !w-5 !h-5 flex items-center justify-center">desktop_windows</mat-icon>
+            </div>
+            <div>
+              <div class="text-xs font-semibold text-zinc-200">{{ i18n.isDe() ? 'Schüler-Bildschirme' : 'Pantallas de Estudiantes' }}</div>
+              <div class="text-[10px] text-zinc-400">{{ i18n.isDe() ? 'Live-Bildschirme aller Schüler ansehen' : 'Ver pantalla y trabajo en vivo de los alumnos' }}</div>
+            </div>
+          </button>
         }
 
         <!-- Settings -->
@@ -310,7 +326,8 @@ export class StartMenu {
       | 'chat'
       | 'whiteboard'
       | 'peers'
-      | 'settings',
+      | 'settings'
+      | 'screen-monitor',
     params?: Record<string, unknown>,
   ): void {
     this.wm.openWindow(appType, undefined, params);

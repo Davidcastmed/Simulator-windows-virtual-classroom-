@@ -63,6 +63,18 @@ import { WindowManagerService } from '../services/window-manager.service';
             </span>
           </button>
 
+          <!-- View Students' Screens (Live Monitor) -->
+          <button
+            id="btn-monitor-screens"
+            type="button"
+            class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-sky-600 hover:bg-sky-500 text-white flex items-center gap-1.5 shadow-md transition"
+            (click)="openScreenMonitor()"
+            [title]="isDe() ? 'Live-Bildschirme aller Schüler ansehen' : 'Ver las pantallas en vivo de los estudiantes'"
+          >
+            <mat-icon class="text-base !w-4 !h-4 flex items-center justify-center">desktop_windows</mat-icon>
+            <span>{{ isDe() ? 'Schüler-Bildschirme' : 'Pantallas Alumnos' }}</span>
+          </button>
+
           <!-- Present Work Modal trigger -->
           <button
             id="btn-present-work"
@@ -252,15 +264,15 @@ import { WindowManagerService } from '../services/window-manager.service';
 
                 <!-- Action Buttons for this student -->
                 <div class="pt-2 border-t border-slate-800/80 flex items-center gap-1.5 mt-2 text-[11px]">
-                  <!-- Observe -->
+                  <!-- Observe / View Screen -->
                   <button
                     type="button"
-                    class="flex-1 py-1 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center gap-1"
+                    class="flex-1 py-1 px-2 rounded-lg bg-sky-900/40 hover:bg-sky-800/60 text-sky-200 border border-sky-700/50 flex items-center justify-center gap-1 font-medium transition"
                     (click)="observeStudent(st.id)"
-                    title="Studentensitzung beobachten"
+                    [title]="isDe() ? 'Bildschirm des Schülers live ansehen' : 'Ver pantalla del estudiante en vivo'"
                   >
-                    <mat-icon class="text-xs !w-3.5 !h-3.5">visibility</mat-icon>
-                    <span>{{ t().teacher.observeStudent }}</span>
+                    <mat-icon class="text-xs !w-3.5 !h-3.5 text-sky-400">desktop_windows</mat-icon>
+                    <span>{{ isDe() ? 'Bildschirm' : 'Ver Pantalla' }}</span>
                   </button>
 
                   <!-- Open Folder -->
@@ -366,6 +378,7 @@ export class TeacherDashboard {
   readonly i18n = inject(I18nService);
 
   readonly t = this.i18n.t;
+  readonly isDe = this.i18n.isDe;
   readonly Math = Math;
 
   readonly showPresentModal = signal<boolean>(false);
@@ -425,11 +438,20 @@ export class TeacherDashboard {
 
   observeStudent(studentId: string): void {
     this.classroom.setObserving(studentId);
-    // Also open explorer to that student's folder
     const student = this.studentList().find((s) => s.id === studentId);
-    if (student) {
-      this.openStudentFolder(student.name);
-    }
+    this.wm.openWindow(
+      'screen-monitor',
+      this.isDe() ? `Monitor: ${student?.name || 'Schüler'}` : `Pantalla: ${student?.name || 'Alumno'}`,
+      { initialStudentId: studentId }
+    );
+  }
+
+  openScreenMonitor(studentId?: string): void {
+    this.wm.openWindow(
+      'screen-monitor',
+      this.isDe() ? 'Schüler-Bildschirme (Live-Monitor)' : 'Pantallas de Estudiantes (Monitor en Vivo)',
+      studentId ? { initialStudentId: studentId } : undefined
+    );
   }
 
   openStudentFolder(studentName: string): void {

@@ -508,10 +508,11 @@ export class LogicGames implements OnInit, OnDestroy {
   // ==========================================
   readonly ZEEK_LEVELS = ZEEK_LEVELS;
   readonly zeekGrid = signal<ZeekTileType[][]>([]);
-  readonly zeekPlayer = signal<{ x: number; y: number; dir: 'N' | 'S' | 'E' | 'W' }>({
+  readonly zeekPlayer = signal<{ x: number; y: number; dir: 'N' | 'S' | 'E' | 'W'; step: number }>({
     x: 0,
     y: 0,
     dir: 'S',
+    step: 0,
   });
   readonly zeekMoves = signal<number>(0);
   readonly zeekScore = signal<number>(0);
@@ -523,7 +524,7 @@ export class LogicGames implements OnInit, OnDestroy {
   readonly zeekWon = signal<boolean>(false);
   readonly zeekHistory = signal<{
     grid: ZeekTileType[][];
-    player: { x: number; y: number; dir: 'N' | 'S' | 'E' | 'W' };
+    player: { x: number; y: number; dir: 'N' | 'S' | 'E' | 'W'; step: number };
     mushroomsLeft: number;
     keysYellow: number;
     keysBlue: number;
@@ -769,6 +770,7 @@ export class LogicGames implements OnInit, OnDestroy {
       x: lvl.playerStart.x,
       y: lvl.playerStart.y,
       dir: lvl.playerStart.dir || 'S',
+      step: 0,
     });
 
     let mushroomCount = 0;
@@ -882,7 +884,7 @@ export class LogicGames implements OnInit, OnDestroy {
         nextGrid[ny][nx] = 'floor';
         this.zeekGrid.set(nextGrid);
         this.zeekKeysYellow.update((k) => k - 1);
-        this.zeekPlayer.set({ x: nx, y: ny, dir });
+        this.zeekPlayer.set({ x: nx, y: ny, dir, step: ((p.step ?? 0) + 1) % 2 });
         this.zeekMoves.update((m) => m + 1);
         this.playChime();
         return;
@@ -905,7 +907,7 @@ export class LogicGames implements OnInit, OnDestroy {
         nextGrid[ny][nx] = 'floor';
         this.zeekGrid.set(nextGrid);
         this.zeekKeysBlue.update((k) => k - 1);
-        this.zeekPlayer.set({ x: nx, y: ny, dir });
+        this.zeekPlayer.set({ x: nx, y: ny, dir, step: ((p.step ?? 0) + 1) % 2 });
         this.zeekMoves.update((m) => m + 1);
         this.playChime();
         return;
@@ -941,7 +943,7 @@ export class LogicGames implements OnInit, OnDestroy {
         nextGrid[pushNy][pushNx] = 'plant_sleeping';
         nextGrid[ny][nx] = 'floor';
         this.zeekGrid.set(nextGrid);
-        this.zeekPlayer.set({ x: nx, y: ny, dir });
+        this.zeekPlayer.set({ x: nx, y: ny, dir, step: ((p.step ?? 0) + 1) % 2 });
         this.zeekMoves.update((m) => m + 1);
         this.zeekScore.update((s) => s + 250);
         this.playMunch();
@@ -966,7 +968,7 @@ export class LogicGames implements OnInit, OnDestroy {
       nextGrid[pushNy][pushNx] = targetTile;
       nextGrid[ny][nx] = 'floor';
       this.zeekGrid.set(nextGrid);
-      this.zeekPlayer.set({ x: nx, y: ny, dir });
+      this.zeekPlayer.set({ x: nx, y: ny, dir, step: ((p.step ?? 0) + 1) % 2 });
       this.zeekMoves.update((m) => m + 1);
       this.playTone(280, 0.06, 'triangle');
       return;
@@ -1007,7 +1009,7 @@ export class LogicGames implements OnInit, OnDestroy {
     }
 
     this.zeekGrid.set(nextGrid);
-    this.zeekPlayer.set({ x: nx, y: ny, dir });
+    this.zeekPlayer.set({ x: nx, y: ny, dir, step: ((p.step ?? 0) + 1) % 2 });
     this.zeekMoves.update((m) => m + 1);
 
     // If level has no exit flower, winning condition is eating all mushrooms

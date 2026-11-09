@@ -26,6 +26,7 @@ import { ClassroomChatComponent } from './components/classroom-chat';
 import { WhiteboardAppComponent } from './components/whiteboard-app';
 import { PeersWidgetComponent } from './components/peers-widget';
 import { SettingsApp } from './components/settings-app';
+import { StudentScreenViewer } from './components/student-screen-viewer';
 import { AppearanceService } from './services/appearance.service';
 import { ClassroomService } from './services/classroom.service';
 import { I18nService } from './services/i18n.service';
@@ -50,7 +51,8 @@ interface DesktopIcon {
     | 'chat'
     | 'whiteboard'
     | 'peers'
-    | 'settings';
+    | 'settings'
+    | 'screen-monitor';
   params?: Record<string, unknown>;
   teacherOnly?: boolean;
   studentOnly?: boolean;
@@ -80,6 +82,7 @@ interface DesktopIcon {
     WhiteboardAppComponent,
     PeersWidgetComponent,
     SettingsApp,
+    StudentScreenViewer,
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -195,14 +198,24 @@ export class App {
     }
 
     if (isTeacher) {
-      icons.push({
-        id: 'icon-teacher',
-        name: this.t().startMenu.teacherDashboard,
-        icon: 'school',
-        iconColor: 'text-purple-300',
-        appType: 'teacher',
-        teacherOnly: true,
-      });
+      icons.push(
+        {
+          id: 'icon-teacher',
+          name: this.t().startMenu.teacherDashboard,
+          icon: 'school',
+          iconColor: 'text-purple-300',
+          appType: 'teacher',
+          teacherOnly: true,
+        },
+        {
+          id: 'icon-screen-monitor',
+          name: this.isDe() ? 'Schüler-Bildschirme' : 'Pantallas Alumnos',
+          icon: 'desktop_windows',
+          iconColor: 'text-sky-300',
+          appType: 'screen-monitor',
+          teacherOnly: true,
+        },
+      );
     }
 
     icons.push(
@@ -271,6 +284,10 @@ export class App {
       return g;
     }
     return 'zeek';
+  }
+
+  getInitialStudentId(params?: Record<string, unknown>): string | null {
+    return typeof params?.['initialStudentId'] === 'string' ? (params['initialStudentId'] as string) : null;
   }
 
   onDesktopClick(e?: Event): void {

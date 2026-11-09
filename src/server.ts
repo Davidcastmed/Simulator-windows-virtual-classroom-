@@ -833,10 +833,10 @@ app.post('/api/classroom/:code/reaction', (req, res) => {
   res.json({ success: true });
 });
 
-// 26. Activity: Report current app and detail (for Class Wall)
+// 26. Activity: Report current app and detail (for Class Wall & Screen Monitor)
 app.post('/api/classroom/:code/activity', (req, res) => {
-  const { userId, currentApp, activityDetail, thumbnail } = req.body;
-  const ok = updateStudentActivity(req.params.code, userId, currentApp, activityDetail, thumbnail);
+  const { userId, currentApp, activityDetail, thumbnail, screenSnapshot } = req.body;
+  const ok = updateStudentActivity(req.params.code, userId, currentApp, activityDetail, thumbnail, screenSnapshot);
   if (!ok) {
     res.status(404).json({ error: 'No se pudo actualizar la actividad.' });
     return;

@@ -1,0 +1,107 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // 1. Users validation
+    function isValidUser(data) {
+      return data.username is string &&
+             data.username.size() > 0 &&
+             data.username.size() <= 64 &&
+             data.role in ['student', 'teacher'];
+    }
+
+    match /users/{userId} {
+      allow get: if isValidId(userId);
+      allow list: if true;
+      allow create, update: if isValidId(userId) && isValidUser(request.resource.data);
+      allow delete: if false;
+    }
+
+    // 2. Groups validation
+    function isValidGroup(data) {
+      return data.id is string && data.id.size() > 0 &&
+             data.code is string && data.code.size() > 0 && data.code.size() <= 32 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 128 &&
+             data.teacherId is string && data.teacherId.size() > 0 &&
+             data.teacherName is string && data.teacherName.size() > 0;
+    }
+
+    match /groups/{groupId} {
+      allow get: if isValidId(groupId);
+      allow list: if true;
+      allow create, update: if isValidId(groupId) && isValidGroup(request.resource.data);
+      allow delete: if isValidId(groupId);
+    }
+
+    // 3. Instant Messages validation
+    function isValidMessage(data) {
+      return data.id is string && data.id.size() > 0 &&
+             data.groupId is string && data.groupId.size() > 0 &&
+             data.senderId is string && data.senderId.size() > 0 &&
+             data.senderName is string && data.senderName.size() > 0 &&
+             data.text is string && data.text.size() > 0 && data.text.size() <= 1000;
+    }
+
+    match /messages/{messageId} {
+      allow get: if isValidId(messageId);
+      allow list: if true;
+      allow create, update: if isValidId(messageId) && isValidMessage(request.resource.data);
+      allow delete: if isValidId(messageId);
+    }
+
+    // 4. Notes validation
+    function isValidNote(data) {
+      return data.id is string && data.id.size() > 0 &&
+             data.groupId is string && data.groupId.size() > 0 &&
+             data.authorId is string && data.authorId.size() > 0 &&
+             data.authorName is string && data.authorName.size() > 0 &&
+             data.text is string && data.text.size() <= 2000;
+    }
+
+    match /notes/{noteId} {
+      allow get: if isValidId(noteId);
+      allow list: if true;
+      allow create, update: if isValidId(noteId) && isValidNote(request.resource.data);
+      allow delete: if isValidId(noteId);
+    }
+
+    // 5. Tasks validation
+    function isValidTask(data) {
+      return data.id is string && data.id.size() > 0 &&
+             data.groupId is string && data.groupId.size() > 0 &&
+             data.teacherId is string && data.teacherId.size() > 0 &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 128;
+    }
+
+    match /tasks/{taskId} {
+      allow get: if isValidId(taskId);
+      allow list: if true;
+      allow create, update: if isValidId(taskId) && isValidTask(request.resource.data);
+      allow delete: if isValidId(taskId);
+    }
+
+    // 6. Resources validation
+    function isValidResource(data) {
+      return data.id is string && data.id.size() > 0 &&
+             data.groupId is string && data.groupId.size() > 0 &&
+             data.authorId is string && data.authorId.size() > 0 &&
+             data.authorName is string && data.authorName.size() > 0 &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 128;
+    }
+
+    match /resources/{resourceId} {
+      allow get: if isValidId(resourceId);
+      allow list: if true;
+      allow create, update: if isValidId(resourceId) && isValidResource(request.resource.data);
+      allow delete: if isValidId(resourceId);
+    }
+  }
+}

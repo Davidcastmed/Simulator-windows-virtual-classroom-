@@ -620,6 +620,7 @@ export function updateStudentActivity(
   currentApp?: string,
   activityDetail?: string,
   thumbnail?: string,
+  screenSnapshot?: string,
 ) {
   const room = getClassroom(code);
   if (!room) return false;
@@ -631,6 +632,7 @@ export function updateStudentActivity(
   if (currentApp !== undefined) student.currentApp = currentApp;
   if (activityDetail !== undefined) student.activityDetail = activityDetail;
   if (thumbnail !== undefined) student.thumbnail = thumbnail;
+  if (screenSnapshot !== undefined) student.screenSnapshot = screenSnapshot;
 
   savePersistentData();
   broadcastEvent(room.code, 'room:update', {

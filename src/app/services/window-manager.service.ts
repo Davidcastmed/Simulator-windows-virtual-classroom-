@@ -41,7 +41,8 @@ export class WindowManagerService {
       | 'chat'
       | 'whiteboard'
       | 'peers'
-      | 'settings',
+      | 'settings'
+      | 'screen-monitor',
     title?: string,
     params?: Record<string, unknown>,
   ): WindowState {
@@ -152,6 +153,12 @@ export class WindowManagerService {
         icon = 'tune';
         defaultWidth = 780;
         defaultHeight = 560;
+        break;
+      case 'screen-monitor':
+        defaultTitle = title || (isDe ? 'Schüler-Bildschirme (Live-Monitor)' : 'Pantallas de Estudiantes (Monitor en Vivo)');
+        icon = 'desktop_windows';
+        defaultWidth = 1040;
+        defaultHeight = 680;
         break;
     }
 

@@ -106,6 +106,9 @@
         @case ('settings') {
           <app-settings-app />
         }
+        @case ('screen-monitor') {
+          <app-student-screen-viewer [initialStudentId]="getInitialStudentId(win.params)" />
+        }
       }
     </app-window-frame>
   }

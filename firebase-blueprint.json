@@ -1,0 +1,355 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Usuario registrado en el aula con su rol asignado (Estudiante o Maestro)",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Identificador único del usuario"
+        },
+        "username": {
+          "type": "string",
+          "description": "Nombre de usuario para iniciar sesión",
+          "maxLength": 64
+        },
+        "role": {
+          "type": "string",
+          "description": "Rol del usuario en el aula",
+          "enum": ["student", "teacher"]
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Nombre completo o visible del usuario",
+          "maxLength": 100
+        },
+        "roomCode": {
+          "type": "string",
+          "description": "Código de aula asignada",
+          "maxLength": 32
+        },
+        "active": {
+          "type": "boolean",
+          "description": "Indica si la cuenta está activa"
+        },
+        "createdAt": {
+          "type": "number",
+          "description": "Timestamp de creación en milisegundos"
+        }
+      },
+      "required": ["username", "role"]
+    },
+    "Group": {
+      "title": "Group",
+      "description": "Grupo único de clase creado por el profesor con sus estudiantes asignados",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Identificador único del grupo"
+        },
+        "code": {
+          "type": "string",
+          "description": "Código único de aula/grupo (ej. INF-101)",
+          "maxLength": 32
+        },
+        "name": {
+          "type": "string",
+          "description": "Nombre del grupo o clase (ej. Informatik Klasse 6b)",
+          "maxLength": 128
+        },
+        "teacherId": {
+          "type": "string",
+          "description": "ID del profesor responsable del grupo"
+        },
+        "teacherName": {
+          "type": "string",
+          "description": "Nombre del profesor",
+          "maxLength": 64
+        },
+        "studentIds": {
+          "type": "array",
+          "description": "Lista de IDs de estudiantes asignados al grupo"
+        },
+        "members": {
+          "type": "array",
+          "description": "Lista de miembros con id y nombre"
+        },
+        "icon": {
+          "type": "string",
+          "description": "Icono identificador del grupo",
+          "maxLength": 32
+        },
+        "color": {
+          "type": "string",
+          "description": "Color temático del grupo",
+          "maxLength": 32
+        },
+        "active": {
+          "type": "boolean",
+          "description": "Estado del grupo"
+        },
+        "createdAt": {
+          "type": "number",
+          "description": "Timestamp de creación en milisegundos"
+        },
+        "updatedAt": {
+          "type": "number",
+          "description": "Timestamp de última actualización"
+        }
+      },
+      "required": ["id", "code", "name", "teacherId", "teacherName"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Mensaje de mensajería instantánea en tiempo real entre profesor y estudiantes",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Identificador único del mensaje"
+        },
+        "groupId": {
+          "type": "string",
+          "description": "Identificador o código del grupo al que pertenece el mensaje"
+        },
+        "senderId": {
+          "type": "string",
+          "description": "ID del usuario emisor"
+        },
+        "senderName": {
+          "type": "string",
+          "description": "Nombre del usuario emisor",
+          "maxLength": 64
+        },
+        "senderRole": {
+          "type": "string",
+          "description": "Rol del emisor en el aula",
+          "enum": ["student", "teacher"]
+        },
+        "text": {
+          "type": "string",
+          "description": "Contenido del mensaje instantáneo",
+          "maxLength": 1000
+        },
+        "type": {
+          "type": "string",
+          "description": "Tipo de mensaje (texto, pregunta, reacción, sistema)",
+          "enum": ["text", "reaction", "question", "system"]
+        },
+        "emoji": {
+          "type": "string",
+          "description": "Emoji opcional asociado al mensaje",
+          "maxLength": 8
+        },
+        "timestamp": {
+          "type": "number",
+          "description": "Timestamp de envío en milisegundos"
+        }
+      },
+      "required": ["id", "groupId", "senderId", "senderName", "text"]
+    },
+    "Note": {
+      "title": "Note",
+      "description": "Notas y apuntes compartidos del grupo",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Identificador único de la nota"
+        },
+        "groupId": {
+          "type": "string",
+          "description": "ID o código del grupo al que pertenece la nota"
+        },
+        "authorId": {
+          "type": "string",
+          "description": "ID del autor de la nota"
+        },
+        "authorName": {
+          "type": "string",
+          "description": "Nombre del autor",
+          "maxLength": 64
+        },
+        "authorRole": {
+          "type": "string",
+          "description": "Rol del autor (student o teacher)",
+          "enum": ["student", "teacher"]
+        },
+        "title": {
+          "type": "string",
+          "description": "Título de la nota",
+          "maxLength": 128
+        },
+        "text": {
+          "type": "string",
+          "description": "Cuerpo de la nota",
+          "maxLength": 2000
+        },
+        "color": {
+          "type": "string",
+          "description": "Color de la nota adhesiva",
+          "maxLength": 32
+        },
+        "pinned": {
+          "type": "boolean",
+          "description": "Indica si la nota está anclada"
+        },
+        "createdAt": {
+          "type": "number",
+          "description": "Timestamp de creación"
+        },
+        "updatedAt": {
+          "type": "number",
+          "description": "Timestamp de actualización"
+        }
+      },
+      "required": ["id", "groupId", "authorId", "authorName", "text"]
+    },
+    "Task": {
+      "title": "Task",
+      "description": "Tareas y actividades asignadas por el profesor a los estudiantes",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Identificador único de la tarea"
+        },
+        "groupId": {
+          "type": "string",
+          "description": "ID o código del grupo"
+        },
+        "teacherId": {
+          "type": "string",
+          "description": "ID del profesor que asignó la tarea"
+        },
+        "teacherName": {
+          "type": "string",
+          "description": "Nombre del profesor",
+          "maxLength": 64
+        },
+        "title": {
+          "type": "string",
+          "description": "Título de la tarea o asignación",
+          "maxLength": 128
+        },
+        "description": {
+          "type": "string",
+          "description": "Instrucciones de la tarea",
+          "maxLength": 2000
+        },
+        "category": {
+          "type": "string",
+          "description": "Categoría de la tarea",
+          "enum": ["files", "drawing", "logic", "coding", "general"]
+        },
+        "dueDate": {
+          "type": "number",
+          "description": "Fecha límite de entrega (timestamp)"
+        },
+        "completedBy": {
+          "type": "array",
+          "description": "Lista de IDs de estudiantes que han completado la tarea"
+        },
+        "createdAt": {
+          "type": "number",
+          "description": "Timestamp de creación"
+        }
+      },
+      "required": ["id", "groupId", "teacherId", "title", "description"]
+    },
+    "Resource": {
+      "title": "Resource",
+      "description": "Recursos educativos y archivos compartidos por el profesor o estudiantes",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Identificador único del recurso"
+        },
+        "groupId": {
+          "type": "string",
+          "description": "ID o código del grupo"
+        },
+        "authorId": {
+          "type": "string",
+          "description": "ID del creador del recurso"
+        },
+        "authorName": {
+          "type": "string",
+          "description": "Nombre del creador",
+          "maxLength": 64
+        },
+        "authorRole": {
+          "type": "string",
+          "description": "Rol del creador",
+          "enum": ["student", "teacher"]
+        },
+        "title": {
+          "type": "string",
+          "description": "Título o nombre del recurso",
+          "maxLength": 128
+        },
+        "type": {
+          "type": "string",
+          "description": "Tipo de recurso",
+          "enum": ["document", "image", "link", "exercise"]
+        },
+        "content": {
+          "type": "string",
+          "description": "Contenido, texto o descripción del recurso",
+          "maxLength": 5000
+        },
+        "urlOrPath": {
+          "type": "string",
+          "description": "Ruta virtual o enlace al recurso",
+          "maxLength": 256
+        },
+        "createdAt": {
+          "type": "number",
+          "description": "Timestamp de creación"
+        }
+      },
+      "required": ["id", "groupId", "authorId", "authorName", "title"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/User"
+      },
+      "description": "Colección de usuarios registrados y sus roles en la base de datos klassenRoom"
+    },
+    "/groups/{groupId}": {
+      "schema": {
+        "$ref": "#/entities/Group"
+      },
+      "description": "Colección de grupos creados por el profesor donde están integrados estudiantes y docentes"
+    },
+    "/messages/{messageId}": {
+      "schema": {
+        "$ref": "#/entities/Message"
+      },
+      "description": "Colección de mensajería instantánea en tiempo real del grupo"
+    },
+    "/notes/{noteId}": {
+      "schema": {
+        "$ref": "#/entities/Note"
+      },
+      "description": "Colección de notas colaborativas de clase y grupos"
+    },
+    "/tasks/{taskId}": {
+      "schema": {
+        "$ref": "#/entities/Task"
+      },
+      "description": "Colección de tareas y actividades asignadas con seguimiento de entrega"
+    },
+    "/resources/{resourceId}": {
+      "schema": {
+        "$ref": "#/entities/Resource"
+      },
+      "description": "Colección de recursos educativos y material compartido del aula"
+    }
+  }
+}

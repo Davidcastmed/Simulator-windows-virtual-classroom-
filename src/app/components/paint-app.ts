@@ -15,6 +15,7 @@ import type { VirtualItem } from '../models/classroom.types';
 import { ActivityTrackerService } from '../services/activity-tracker.service';
 import { ClassroomService } from '../services/classroom.service';
 import { I18nService } from '../services/i18n.service';
+import { downloadCanvasAsPdf } from '../utils/canvas-pdf';
 
 type PaintTool = 'pencil' | 'brush' | 'eraser' | 'line' | 'rectangle' | 'circle' | 'text';
 
@@ -88,6 +89,19 @@ const LOCAL_DRAFT_KEY = 'klassendesktop_paint_draft';
           >
             <mat-icon class="text-base !w-4 !h-4 flex items-center justify-center">save_as</mat-icon>
             <span class="hidden md:inline">{{ t().paint.saveAs }}</span>
+          </button>
+
+          <!-- Export PDF -->
+          <button
+            id="btn-paint-export-pdf"
+            type="button"
+            class="h-8 sm:h-7 px-2 sm:px-2.5 rounded-lg flex items-center gap-1.5 bg-rose-700 hover:bg-rose-600 active:bg-rose-800 text-white font-medium shadow-sm transition border border-rose-600/50"
+            (click)="exportCanvasAsPdf()"
+            [title]="isDe() ? 'Als PDF exportieren / drucken' : 'Exportar como PDF / imprimir'"
+            aria-label="Als PDF exportieren"
+          >
+            <mat-icon class="text-base !w-4 !h-4 flex items-center justify-center">picture_as_pdf</mat-icon>
+            <span class="hidden sm:inline">PDF</span>
           </button>
 
           <div class="h-4 w-px bg-slate-800 mx-0.5 sm:mx-1"></div>
@@ -1128,6 +1142,39 @@ export class PaintApp implements AfterViewInit, OnDestroy {
 
     this.showSaveModal.set(false);
     await this.doSave(folder, fileName);
+  }
+
+  exportCanvasAsPdf(): void {
+    const canvas = this.canvasRef().nativeElement;
+    const user = this.classroom.currentUser();
+    const group = this.classroom.currentGroup();
+    const baseName = this.saveFileName().trim() || (this.isDe() ? 'Mein_Kunstwerk' : 'Mi_Dibujo');
+
+    try {
+      downloadCanvasAsPdf(canvas, baseName, {
+        title: baseName,
+        author: user ? `${user.name} (${user.role === 'teacher' ? 'Lehrkraft' : 'Schüler'})` : 'Schüler',
+        classroomGroup: group ? group.name : 'Informatik Klasse 6b',
+        dateStr: new Date().toLocaleDateString(this.isDe() ? 'de-DE' : 'es-ES', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        }),
+      });
+
+      this.showToast(
+        this.isDe()
+          ? `PDF "${baseName}.pdf" exportiert! Bereit zum Drucken oder Archivieren.`
+          : `¡PDF "${baseName}.pdf" exportado! Listo para imprimir o archivar.`,
+        'success'
+      );
+      this.updateActivity();
+    } catch {
+      this.showToast(
+        this.isDe() ? 'Fehler beim PDF-Export.' : 'Error al exportar a PDF.',
+        'error'
+      );
+    }
   }
 
   private async doSave(folderPath: string, fileName: string): Promise<void> {

@@ -82,6 +82,7 @@ export interface UserSession {
   taskProgress?: number; // 0 to 7
   currentPath?: string;
   thumbnail?: string; // latest drawing thumbnail or code snapshot
+  screenSnapshot?: string; // live screen capture / snapshot of student workspace
   groupId?: string;
   reactionsReceived?: {
     bravo: number;
@@ -171,7 +172,8 @@ export interface WindowState {
     | 'chat'
     | 'whiteboard'
     | 'peers'
-    | 'settings';
+    | 'settings'
+    | 'screen-monitor';
   icon: string;
   isOpen: boolean;
   isMinimized: boolean;
