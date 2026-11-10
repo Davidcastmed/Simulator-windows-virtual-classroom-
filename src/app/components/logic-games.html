@@ -236,7 +236,7 @@
         <div class="relative p-3.5 sm:p-4 bg-gradient-to-b from-stone-900 via-slate-900 to-black rounded-3xl border-4 border-slate-700/90 shadow-[0_20px_50px_rgba(0,0,0,0.85)] max-w-full overflow-auto">
           <!-- Inner Decorative Bezel -->
           <div
-            class="grid gap-1 sm:gap-1.5 p-2 bg-gradient-to-br from-emerald-950/80 via-slate-950 to-emerald-950/80 rounded-2xl border-2 border-emerald-900/60 shadow-inner"
+            class="grid gap-0 p-2 bg-gradient-to-br from-emerald-950/80 via-slate-950 to-emerald-950/80 rounded-2xl border-2 border-emerald-900/60 shadow-inner relative"
             [style.grid-template-columns]="'repeat(' + currentZeekLevel().width + ', minmax(0, 1fr))'"
           >
             @for (cell of zeekGridCells(); track cell.x + '-' + cell.y) {
@@ -492,189 +492,198 @@
                   </div>
                 }
 
-                <!-- ========================================================== -->
-                <!-- THE ORIGINAL ZEEK PROTAGONIST CHARACTER AVATAR -->
-                <!-- Faithful to the 1995 Sidewalk Software Classic: -->
-                <!-- Round yellow body, classic blue propeller beanie, big -->
-                <!-- cartoon eyes looking in movement direction, cute smile, -->
-                <!-- rosy cheeks, hands and walking blue cartoon shoes! -->
-                <!-- ========================================================== -->
-                @if (zeekPlayer().x === cell.x && zeekPlayer().y === cell.y) {
-                  <div
-                    id="zeek-player-avatar"
-                    class="absolute inset-0 flex items-center justify-center z-20 pointer-events-none transition-all duration-150 anim-zeek-idle"
-                  >
-                    <svg class="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 filter drop-shadow-[0_5px_10px_rgba(0,0,0,0.65)] select-none" viewBox="0 0 48 48" fill="none">
-                      <defs>
-                        <!-- Warm 3D Gradient for Zeek's Round Body -->
-                        <radialGradient id="zeekYellowBody" cx="35%" cy="30%" r="65%">
-                          <stop offset="0%" stop-color="#fef9c3"/>
-                          <stop offset="40%" stop-color="#facc15"/>
-                          <stop offset="85%" stop-color="#eab308"/>
-                          <stop offset="100%" stop-color="#ca8a04"/>
-                        </radialGradient>
-
-                        <!-- Blue Beanie Gradient -->
-                        <linearGradient id="zeekBeanieGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                          <stop offset="0%" stop-color="#3b82f6"/>
-                          <stop offset="100%" stop-color="#1d4ed8"/>
-                        </linearGradient>
-                      </defs>
-
-                      <!-- 1. BLUE CARTOON SHOES / BOOTS (With alternating step cycle) -->
-                      <g id="zeek-feet">
-                        <!-- Left Shoe -->
-                        <ellipse
-                          cx="17"
-                          [attr.cy]="zeekPlayer().step === 1 ? 40 : 42"
-                          rx="5.5"
-                          ry="3.8"
-                          fill="#1e40af"
-                          stroke="#172554"
-                          stroke-width="1.5"
-                        />
-                        <ellipse cx="16" [attr.cy]="zeekPlayer().step === 1 ? 39 : 41" rx="3.5" ry="1.8" fill="#3b82f6" opacity="0.6"/>
-
-                        <!-- Right Shoe -->
-                        <ellipse
-                          cx="31"
-                          [attr.cy]="zeekPlayer().step === 1 ? 42 : 40"
-                          rx="5.5"
-                          ry="3.8"
-                          fill="#1e40af"
-                          stroke="#172554"
-                          stroke-width="1.5"
-                        />
-                        <ellipse cx="30" [attr.cy]="zeekPlayer().step === 1 ? 41 : 39" rx="3.5" ry="1.8" fill="#3b82f6" opacity="0.6"/>
-                      </g>
-
-                      <!-- 2. HANDS / MITTENS -->
-                      <circle cx="7.5" cy="28" r="3.2" fill="#facc15" stroke="#b45309" stroke-width="1.2"/>
-                      <circle cx="40.5" cy="28" r="3.2" fill="#facc15" stroke="#b45309" stroke-width="1.2"/>
-
-                      <!-- 3. ROUND YELLOW BODY -->
-                      <circle cx="24" cy="27" r="16.5" fill="url(#zeekYellowBody)" stroke="#a16207" stroke-width="1.6"/>
-
-                      <!-- 4. FACE RENDERING (Varies dynamically by direction) -->
-                      <!-- DIRECTION: SOUTH (FACING FORWARD) -->
-                      @if (zeekPlayer().dir === 'S') {
-                        <g id="zeek-face-south">
-                          <!-- Rosy Blushing Cheeks -->
-                          <ellipse cx="13" cy="29.5" rx="3" ry="2" fill="#f472b6" opacity="0.65"/>
-                          <ellipse cx="35" cy="29.5" rx="3" ry="2" fill="#f472b6" opacity="0.65"/>
-
-                          <!-- Big Cartoon Eyes -->
-                          <!-- Left Eye -->
-                          <ellipse cx="18.5" cy="24" rx="4.2" ry="5.8" fill="#ffffff" stroke="#0f172a" stroke-width="1.4"/>
-                          <circle cx="19" cy="24.5" r="2.5" fill="#0f172a"/>
-                          <circle cx="17.8" cy="23" r="1" fill="#ffffff"/>
-
-                          <!-- Right Eye -->
-                          <ellipse cx="29.5" cy="24" rx="4.2" ry="5.8" fill="#ffffff" stroke="#0f172a" stroke-width="1.4"/>
-                          <circle cx="29" cy="24.5" r="2.5" fill="#0f172a"/>
-                          <circle cx="27.8" cy="23" r="1" fill="#ffffff"/>
-
-                          <!-- Cute Button Nose -->
-                          <circle cx="24" cy="27.5" r="1.6" fill="#ea580c"/>
-
-                          <!-- Cheerful Open Smile with Tongue -->
-                          <path d="M 19 31 Q 24 36.5 29 31" fill="#78350f" stroke="#78350f" stroke-width="1.5" stroke-linecap="round"/>
-                          <path d="M 21.5 32.5 Q 24 35 26.5 32.5" fill="#f43f5e"/>
-                        </g>
-                      }
-
-                      <!-- DIRECTION: EAST (MOVING RIGHT) -->
-                      @if (zeekPlayer().dir === 'E') {
-                        <g id="zeek-face-east">
-                          <!-- Right Cheek -->
-                          <ellipse cx="36" cy="29.5" rx="3" ry="2" fill="#f472b6" opacity="0.65"/>
-
-                          <!-- Eyes Glancing Right -->
-                          <!-- Left Eye (Perspective) -->
-                          <ellipse cx="22" cy="24" rx="3.5" ry="5.5" fill="#ffffff" stroke="#0f172a" stroke-width="1.4"/>
-                          <circle cx="23.5" cy="24.5" r="2.2" fill="#0f172a"/>
-                          <circle cx="23" cy="23" r="0.9" fill="#ffffff"/>
-
-                          <!-- Right Eye (Closer) -->
-                          <ellipse cx="31.5" cy="24" rx="4.5" ry="5.8" fill="#ffffff" stroke="#0f172a" stroke-width="1.4"/>
-                          <circle cx="33.5" cy="24.5" r="2.5" fill="#0f172a"/>
-                          <circle cx="32.8" cy="23" r="1" fill="#ffffff"/>
-
-                          <!-- Nose Pointing Right -->
-                          <path d="M 33 27 Q 37.5 28 34 29" fill="#ea580c" stroke="#c2410c" stroke-width="0.8"/>
-
-                          <!-- Smile -->
-                          <path d="M 23 31.5 Q 29 36 34 31" fill="none" stroke="#78350f" stroke-width="1.6" stroke-linecap="round"/>
-                        </g>
-                      }
-
-                      <!-- DIRECTION: WEST (MOVING LEFT) -->
-                      @if (zeekPlayer().dir === 'W') {
-                        <g id="zeek-face-west">
-                          <!-- Left Cheek -->
-                          <ellipse cx="12" cy="29.5" rx="3" ry="2" fill="#f472b6" opacity="0.65"/>
-
-                          <!-- Eyes Glancing Left -->
-                          <!-- Left Eye (Closer) -->
-                          <ellipse cx="16.5" cy="24" rx="4.5" ry="5.8" fill="#ffffff" stroke="#0f172a" stroke-width="1.4"/>
-                          <circle cx="14.5" cy="24.5" r="2.5" fill="#0f172a"/>
-                          <circle cx="15.2" cy="23" r="1" fill="#ffffff"/>
-
-                          <!-- Right Eye (Perspective) -->
-                          <ellipse cx="26" cy="24" rx="3.5" ry="5.5" fill="#ffffff" stroke="#0f172a" stroke-width="1.4"/>
-                          <circle cx="24.5" cy="24.5" r="2.2" fill="#0f172a"/>
-                          <circle cx="25" cy="23" r="0.9" fill="#ffffff"/>
-
-                          <!-- Nose Pointing Left -->
-                          <path d="M 15 27 Q 10.5 28 14 29" fill="#ea580c" stroke="#c2410c" stroke-width="0.8"/>
-
-                          <!-- Smile -->
-                          <path d="M 14 31 Q 19 36 25 31.5" fill="none" stroke="#78350f" stroke-width="1.6" stroke-linecap="round"/>
-                        </g>
-                      }
-
-                      <!-- DIRECTION: NORTH (MOVING UP / BACK OF HEAD) -->
-                      @if (zeekPlayer().dir === 'N') {
-                        <g id="zeek-back-head">
-                          <!-- Back of head round contour -->
-                          <path d="M 12 18 C 12 10 36 10 36 18 C 36 24 12 24 12 18 Z" fill="url(#zeekBeanieGrad)" stroke="#1e3a8a" stroke-width="1.6"/>
-                          <!-- Beanie seams -->
-                          <path d="M 24 12 L 24 22" stroke="#1d4ed8" stroke-width="1.5" stroke-linecap="round"/>
-                          <path d="M 18 14 L 16 21" stroke="#1d4ed8" stroke-width="1.2" stroke-linecap="round"/>
-                          <path d="M 30 14 L 32 21" stroke="#1d4ed8" stroke-width="1.2" stroke-linecap="round"/>
-                        </g>
-                      }
-
-                      <!-- 5. THE SIGNATURE BLUE PROPELLER BEANIE CAP (TOP) -->
-                      <g id="zeek-beanie">
-                        <!-- Cap Dome (Visible on S, E, W) -->
-                        @if (zeekPlayer().dir !== 'N') {
-                          <path d="M 14 17 C 14 10.5 34 10.5 34 17 Z" fill="url(#zeekBeanieGrad)" stroke="#1e3a8a" stroke-width="1.5"/>
-                          <!-- Cap Rim / Band -->
-                          <ellipse cx="24" cy="17" rx="10.5" ry="2.8" fill="#1e40af" stroke="#172554" stroke-width="1.2"/>
-                        }
-
-                        <!-- Beanie Center Post / Rod -->
-                        <rect x="23" y="7.5" width="2" height="4.5" rx="1" fill="#475569" stroke="#1e293b" stroke-width="0.8"/>
-                        <!-- Center Gold Pin Hub -->
-                        <circle cx="24" cy="7.5" r="2.2" fill="#f59e0b" stroke="#92400e" stroke-width="0.8"/>
-
-                        <!-- Dual-Blade Spinning Propeller (Red & Yellow Blades) -->
-                        <g class="anim-zeek-propeller" style="transform-origin: 24px 7.5px;">
-                          <!-- Left Red Blade -->
-                          <path d="M 24 7.5 C 19 5.5 10 6.5 10 7.5 C 10 8.5 19 9.5 24 7.5 Z" fill="#ef4444" stroke="#991b1b" stroke-width="0.8"/>
-                          <!-- Right Yellow Blade -->
-                          <path d="M 24 7.5 C 29 5.5 38 6.5 38 7.5 C 38 8.5 29 9.5 24 7.5 Z" fill="#facc15" stroke="#ca8a04" stroke-width="0.8"/>
-                          <!-- Center hub cap -->
-                          <circle cx="24" cy="7.5" r="1.5" fill="#f59e0b"/>
-                          <circle cx="23.3" cy="6.8" r="0.6" fill="#ffffff"/>
-                        </g>
-                      </g>
-                    </svg>
-                  </div>
-                }
               </div>
             }
+
+            <!-- ========================================================== -->
+            <!-- THE AUTHENTIC ORIGINAL ZEEK MUSHROOM PROTAGONIST -->
+            <!-- Redesigned faithfully to the 1995 Sidewalk Software Game: -->
+            <!-- - "Hongo con Sombrero" (Mushroom with flared hat cap & gills) -->
+            <!-- - Creamy mushroom stalk body with cute cartoon face -->
+            <!-- - Large expressive cartoon eyes with directional glance -->
+            <!-- - Iconic blue propeller beanie spinning on the hat apex -->
+            <!-- - Blue cartoon shoes with harmonic walking bounce -->
+            <!-- - Smooth continuous CSS coordinate glide across the board -->
+            <!-- ========================================================== -->
+            <div
+              id="zeek-player-avatar"
+              class="absolute pointer-events-none z-30 flex items-center justify-center zeek-smooth-glide select-none"
+              [style.left]="'calc(' + zeekPlayer().x + ' * (100% - 16px) / ' + currentZeekLevel().width + ' + 8px)'"
+              [style.top]="'calc(' + zeekPlayer().y + ' * (100% - 16px) / ' + currentZeekLevel().height + ' + 8px)'"
+              [style.width]="'calc((100% - 16px) / ' + currentZeekLevel().width + ')'"
+              [style.height]="'calc((100% - 16px) / ' + currentZeekLevel().height + ')'"
+            >
+              <div
+                class="w-full h-full flex items-center justify-center transition-transform"
+                [class.anim-zeek-step-1]="zeekPlayer().step % 2 === 1"
+                [class.anim-zeek-step-2]="zeekPlayer().step % 2 === 0"
+              >
+                <svg class="w-11 h-11 sm:w-12 sm:h-12 md:w-13 md:h-13 filter drop-shadow-[0_6px_12px_rgba(0,0,0,0.7)] select-none" viewBox="0 0 48 48" fill="none">
+                  <defs>
+                    <!-- Mushroom Sombrero Cap Gradient (Warm Toadstool Honey & Amber) -->
+                    <radialGradient id="mushHatGrad" cx="35%" cy="30%" r="65%">
+                      <stop offset="0%" stop-color="#fde047"/>
+                      <stop offset="30%" stop-color="#f59e0b"/>
+                      <stop offset="75%" stop-color="#d97706"/>
+                      <stop offset="100%" stop-color="#92400e"/>
+                    </radialGradient>
+
+                    <!-- Mushroom Brim Underside Gills Gradient -->
+                    <linearGradient id="mushGillsGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stop-color="#fef3c7"/>
+                      <stop offset="100%" stop-color="#fde68a"/>
+                    </linearGradient>
+
+                    <!-- Cream Mushroom Stalk Body -->
+                    <radialGradient id="mushStalkGrad" cx="35%" cy="35%" r="65%">
+                      <stop offset="0%" stop-color="#ffffff"/>
+                      <stop offset="50%" stop-color="#fef3c7"/>
+                      <stop offset="85%" stop-color="#fde68a"/>
+                      <stop offset="100%" stop-color="#d97706"/>
+                    </radialGradient>
+
+                    <!-- Blue Beanie Gradient -->
+                    <linearGradient id="beanieGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stop-color="#38bdf8"/>
+                      <stop offset="50%" stop-color="#2563eb"/>
+                      <stop offset="100%" stop-color="#1e3a8a"/>
+                    </linearGradient>
+                  </defs>
+
+                  <!-- 1. BLUE CARTOON WALKING SHOES (Alternating Step Cycle) -->
+                  <g id="zeek-shoes">
+                    <!-- Left Shoe -->
+                    <ellipse
+                      cx="18"
+                      [attr.cy]="zeekPlayer().step % 2 === 1 ? 40.5 : 42"
+                      rx="5"
+                      ry="3.5"
+                      fill="#1d4ed8"
+                      stroke="#172554"
+                      stroke-width="1.3"
+                    />
+                    <ellipse cx="17.2" [attr.cy]="zeekPlayer().step % 2 === 1 ? 39.8 : 41.3" rx="3.2" ry="1.6" fill="#60a5fa" opacity="0.6"/>
+
+                    <!-- Right Shoe -->
+                    <ellipse
+                      cx="30"
+                      [attr.cy]="zeekPlayer().step % 2 === 1 ? 42 : 40.5"
+                      rx="5"
+                      ry="3.5"
+                      fill="#1d4ed8"
+                      stroke="#172554"
+                      stroke-width="1.3"
+                    />
+                    <ellipse cx="29.2" [attr.cy]="zeekPlayer().step % 2 === 1 ? 41.3 : 39.8" rx="3.2" ry="1.6" fill="#60a5fa" opacity="0.6"/>
+                  </g>
+
+                  <!-- 2. STUBBY MUSHROOM HANDS -->
+                  <circle cx="9" cy="31" r="2.8" fill="#fef3c7" stroke="#b45309" stroke-width="1.1"/>
+                  <circle cx="39" cy="31" r="2.8" fill="#fef3c7" stroke="#b45309" stroke-width="1.1"/>
+
+                  <!-- 3. CREAM MUSHROOM STALK BODY (Head & Torso) -->
+                  <path
+                    d="M 14 23 C 14 36 17 41 24 41 C 31 41 34 36 34 23 Z"
+                    fill="url(#mushStalkGrad)"
+                    stroke="#b45309"
+                    stroke-width="1.4"
+                  />
+
+                  <!-- 4. FACE DETAILS (Directional) -->
+                  @if (zeekPlayer().dir === 'S') {
+                    <!-- Rosy Blushing Cheeks -->
+                    <ellipse cx="16" cy="31.5" rx="2.5" ry="1.6" fill="#fb7185" opacity="0.65"/>
+                    <ellipse cx="32" cy="31.5" rx="2.5" ry="1.6" fill="#fb7185" opacity="0.65"/>
+
+                    <!-- Big Cartoon Eyes Looking Forward -->
+                    <ellipse cx="19" cy="27" rx="3.5" ry="4.8" fill="#ffffff" stroke="#0f172a" stroke-width="1.2"/>
+                    <circle cx="19.4" cy="27.5" r="2.1" fill="#0f172a"/>
+                    <circle cx="18.3" cy="26.2" r="0.9" fill="#ffffff"/>
+
+                    <ellipse cx="29" cy="27" rx="3.5" ry="4.8" fill="#ffffff" stroke="#0f172a" stroke-width="1.2"/>
+                    <circle cx="28.6" cy="27.5" r="2.1" fill="#0f172a"/>
+                    <circle cx="27.5" cy="26.2" r="0.9" fill="#ffffff"/>
+
+                    <!-- Cute Button Nose -->
+                    <circle cx="24" cy="29.5" r="1.4" fill="#ea580c"/>
+
+                    <!-- Cheerful Smile with Tongue -->
+                    <path d="M 20 33 Q 24 37 28 33" fill="#78350f" stroke="#78350f" stroke-width="1.3" stroke-linecap="round"/>
+                    <path d="M 22 34.2 Q 24 36.2 26 34.2" fill="#f43f5e"/>
+                  }
+
+                  @if (zeekPlayer().dir === 'E') {
+                    <!-- Cheek -->
+                    <ellipse cx="32" cy="31.5" rx="2.5" ry="1.6" fill="#fb7185" opacity="0.65"/>
+                    <!-- Glancing Right -->
+                    <ellipse cx="21" cy="27" rx="3" ry="4.5" fill="#ffffff" stroke="#0f172a" stroke-width="1.2"/>
+                    <circle cx="22.2" cy="27.5" r="1.8" fill="#0f172a"/>
+                    <circle cx="21.5" cy="26.2" r="0.8" fill="#ffffff"/>
+
+                    <ellipse cx="28.5" cy="27" rx="3.6" ry="4.8" fill="#ffffff" stroke="#0f172a" stroke-width="1.2"/>
+                    <circle cx="30.2" cy="27.5" r="2.1" fill="#0f172a"/>
+                    <circle cx="29.5" cy="26.2" r="0.8" fill="#ffffff"/>
+
+                    <path d="M 29.5 29 Q 33 30 30 31" fill="#ea580c" stroke="#c2410c" stroke-width="0.8"/>
+                    <path d="M 22 33 Q 26 36.5 30 33" fill="none" stroke="#78350f" stroke-width="1.3" stroke-linecap="round"/>
+                  }
+
+                  @if (zeekPlayer().dir === 'W') {
+                    <!-- Cheek -->
+                    <ellipse cx="16" cy="31.5" rx="2.5" ry="1.6" fill="#fb7185" opacity="0.65"/>
+                    <!-- Glancing Left -->
+                    <ellipse cx="19.5" cy="27" rx="3.6" ry="4.8" fill="#ffffff" stroke="#0f172a" stroke-width="1.2"/>
+                    <circle cx="17.8" cy="27.5" r="2.1" fill="#0f172a"/>
+                    <circle cx="18.5" cy="26.2" r="0.8" fill="#ffffff"/>
+
+                    <ellipse cx="27" cy="27" rx="3" ry="4.5" fill="#ffffff" stroke="#0f172a" stroke-width="1.2"/>
+                    <circle cx="25.8" cy="27.5" r="1.8" fill="#0f172a"/>
+                    <circle cx="26.5" cy="26.2" r="0.8" fill="#ffffff"/>
+
+                    <path d="M 18.5 29 Q 15 30 18 31" fill="#ea580c" stroke="#c2410c" stroke-width="0.8"/>
+                    <path d="M 18 33 Q 22 36.5 26 33" fill="none" stroke="#78350f" stroke-width="1.3" stroke-linecap="round"/>
+                  }
+
+                  <!-- 5. THE MUSHROOM CAP / SOMBRERO (Wide mushroom hat over stalk) -->
+                  <!-- Underside Gills / Brim Lip -->
+                  <ellipse cx="24" cy="21.5" rx="19" ry="4.5" fill="url(#mushGillsGrad)" stroke="#b45309" stroke-width="1.2"/>
+                  <!-- Subtle gill ridges -->
+                  <path d="M 12 22 Q 24 23.5 36 22" stroke="#d97706" stroke-width="0.7" fill="none" opacity="0.6"/>
+
+                  <!-- Domed Mushroom Cap -->
+                  <path
+                    d="M 5 21 C 5 9 43 9 43 21 C 41 23.5 7 23.5 5 21 Z"
+                    fill="url(#mushHatGrad)"
+                    stroke="#78350f"
+                    stroke-width="1.5"
+                  />
+
+                  <!-- Mushroom Cap 3D Highlight & White Polka Dots (Classic Toadstool) -->
+                  <path d="M 11 15 C 16 11 32 11 37 15" stroke="#fef08a" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+                  <circle cx="24" cy="14" r="2" fill="#ffffff" opacity="0.85"/>
+                  <circle cx="14" cy="18" r="1.6" fill="#ffffff" opacity="0.85"/>
+                  <circle cx="34" cy="18" r="1.6" fill="#ffffff" opacity="0.85"/>
+
+                  <!-- 6. THE PROPELLER BEANIE ON TOP OF THE MUSHROOM SOMBRERO -->
+                  <!-- Beanie base cup -->
+                  <path d="M 20 10.5 C 20 8 28 8 28 10.5 Z" fill="url(#beanieGrad)" stroke="#1e3a8a" stroke-width="0.9"/>
+                  <!-- Beanie spindle rod -->
+                  <rect x="23.2" y="4.5" width="1.6" height="4" rx="0.8" fill="#334155"/>
+                  <circle cx="24" cy="4.5" r="1.8" fill="#f59e0b" stroke="#92400e" stroke-width="0.6"/>
+
+                  <!-- Spinning Dual-Blade Propeller (Red & Yellow) -->
+                  <g class="anim-zeek-propeller" style="transform-origin: 24px 4.5px;">
+                    <!-- Red blade -->
+                    <path d="M 24 4.5 C 19 2.5 10 3.5 10 4.5 C 10 5.5 19 6.5 24 4.5 Z" fill="#ef4444" stroke="#991b1b" stroke-width="0.7"/>
+                    <!-- Yellow blade -->
+                    <path d="M 24 4.5 C 29 2.5 38 3.5 38 4.5 C 38 5.5 29 6.5 24 4.5 Z" fill="#facc15" stroke="#ca8a04" stroke-width="0.7"/>
+                    <!-- Hub cap -->
+                    <circle cx="24" cy="4.5" r="1.2" fill="#f59e0b"/>
+                    <circle cx="23.5" cy="4" r="0.4" fill="#ffffff"/>
+                  </g>
+                </svg>
+              </div>
+            </div>
           </div>
         </div>
 

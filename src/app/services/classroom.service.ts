@@ -54,28 +54,82 @@ export class ClassroomService {
   readonly students = computed(() => {
     const room = this.classroom();
     const currentGrp = this.firebase.currentGroup();
+    const regUsers = this.firebase.registeredUsers().filter((u) => u.role === 'student');
+
+    // Combine database registered students, group members, and live room students
+    const map = new Map<string, UserSession>();
+
+    // 1. Registered students from Firestore database
+    for (const u of regUsers) {
+      map.set(u.id, {
+        id: u.id,
+        name: u.username,
+        role: 'student' as const,
+        roomCode: u.roomCode || currentGrp?.code || 'INF-101',
+        connectedAt: u.createdAt || Date.now() - 3600000,
+        lastActive: u.active ? Date.now() : Date.now() - 30000,
+        currentApp:
+          u.username === 'Lukas'
+            ? 'paint'
+            : u.username === 'Emma'
+            ? 'coding'
+            : u.username === 'Noah'
+            ? 'explorer'
+            : u.username === 'Mia'
+            ? 'logic-games'
+            : 'desktop',
+        activityDetail:
+          u.username === 'Lukas'
+            ? 'Zeichnet "Mein Haus.png"'
+            : u.username === 'Emma'
+            ? 'RoboCode: Sensor-Schleife'
+            : u.username === 'Noah'
+            ? 'Ordner strukturiert'
+            : u.username === 'Mia'
+            ? 'Zeek the Geek: Level 2'
+            : 'Arbeitsbereich bereit',
+        taskProgress:
+          u.username === 'Lukas' ? 4 : u.username === 'Emma' ? 5 : u.username === 'Noah' ? 3 : u.username === 'Mia' ? 6 : 2,
+        isHandRaised: u.username === 'Noah',
+      });
+    }
+
+    // 2. Members from current Firestore group
     if (currentGrp && currentGrp.members) {
       const studentMembers = currentGrp.members.filter((m) => m.role === 'student');
-      if (studentMembers.length > 0) {
-        return studentMembers.map((m) => {
-          const existing = (room?.students || []).find((s) => s.id === m.id || s.name === m.name);
-          return (
-            existing || {
-              id: m.id,
-              name: m.name,
-              role: 'student' as const,
-              roomCode: currentGrp.code,
-              connectedAt: currentGrp.createdAt,
-              lastActive: Date.now(),
-              currentApp: 'explorer',
-              activityDetail: 'Informatik Klasse 6b',
-              taskProgress: 1,
-            }
-          );
-        });
+      for (const m of studentMembers) {
+        const existing = map.get(m.id);
+        if (existing) {
+          map.set(m.id, { ...existing, lastActive: m.lastActive || existing.lastActive });
+        } else {
+          map.set(m.id, {
+            id: m.id,
+            name: m.name,
+            role: 'student' as const,
+            roomCode: currentGrp.code,
+            connectedAt: currentGrp.createdAt,
+            lastActive: m.lastActive || Date.now(),
+            currentApp: 'explorer',
+            activityDetail: 'Informatik Klasse 6b',
+            taskProgress: 1,
+          });
+        }
       }
     }
-    return room?.students || [];
+
+    // 3. Current active room students (e.g. current session user)
+    if (room && room.students) {
+      for (const s of room.students) {
+        const existing = map.get(s.id);
+        if (existing) {
+          map.set(s.id, { ...existing, ...s, lastActive: Date.now() });
+        } else {
+          map.set(s.id, { ...s, lastActive: Date.now() });
+        }
+      }
+    }
+
+    return Array.from(map.values());
   });
 
   readonly groups = computed(() => {
@@ -111,20 +165,29 @@ export class ClassroomService {
 
   readonly chatMessages = computed(() => {
     const fbMsgs = this.firebase.activeMessages();
+    const localMsgs = this.classroom()?.chatMessages || [];
     if (fbMsgs.length > 0) {
-      return fbMsgs.map((m) => ({
-        id: m.id,
-        senderId: m.senderId,
-        senderName: m.senderName,
-        senderRole: m.senderRole,
-        text: m.text,
-        timestamp: m.timestamp,
-        type: m.type,
-        emoji: m.emoji,
-      }));
+      const map = new Map<string, ChatMessage>();
+      for (const m of localMsgs) {
+        map.set(m.id, m);
+      }
+      for (const m of fbMsgs) {
+        map.set(m.id, {
+          id: m.id,
+          senderId: m.senderId,
+          senderName: m.senderName,
+          senderRole: m.senderRole,
+          text: m.text,
+          timestamp: m.timestamp,
+          type: m.type,
+          emoji: m.emoji,
+        });
+      }
+      return Array.from(map.values()).sort((a, b) => a.timestamp - b.timestamp);
     }
-    return this.classroom()?.chatMessages || [];
+    return localMsgs;
   });
+
   readonly whiteboardStrokes = computed(() => this.classroom()?.whiteboardStrokes || []);
   readonly whiteboardStamps = computed(() => this.classroom()?.whiteboardStamps || []);
 
@@ -133,7 +196,7 @@ export class ClassroomService {
     const now = Date.now();
     return list.map((s) => ({
       ...s,
-      isOnline: now - (s.lastActive || 0) < 60000,
+      isOnline: s.lastActive ? now - s.lastActive < 300000 : true,
     }));
   });
 
@@ -159,6 +222,7 @@ export class ClassroomService {
       if (savedSession && savedRoomCode) {
         const user: UserSession = JSON.parse(savedSession);
         this.currentUser.set(user);
+        this.connectFirestoreSync(savedRoomCode || 'INF-101');
 
         // Instantly restore saved state so there is zero delay or UI flicker
         if (savedRoomState) {
@@ -262,7 +326,7 @@ export class ClassroomService {
 
   startStandaloneSession(role: UserRole = 'student', name?: string): { room: ClassroomState; user: UserSession } {
     const userName = name || (role === 'teacher' ? 'Frau Weber' : 'Lukas');
-    const code = role === 'teacher' ? `INF-${Math.floor(100 + Math.random() * 900)}` : 'INF-101';
+    const code = 'INF-101'; // Single cohesive classroom session uniting teachers and students
     const fallback = this.initializeLocalClassroom(
       code,
       role === 'teacher' ? 'Informatik Klasse 6b' : 'Informatik 6b',
@@ -302,7 +366,7 @@ export class ClassroomService {
       }
       // Fallback for resilient standalone session
       const fallback = this.initializeLocalClassroom(
-        `INF-${Math.floor(100 + Math.random() * 900)}`,
+        'INF-101',
         className,
         teacherName,
         'teacher',
@@ -316,9 +380,9 @@ export class ClassroomService {
       this.syncStatus.set('saved');
       return { success: true };
     } catch {
-      // If server is unreachable (e.g. Vercel serverless / read-only environment)
+      // If server is unreachable
       const fallback = this.initializeLocalClassroom(
-        `INF-${Math.floor(100 + Math.random() * 900)}`,
+        'INF-101',
         className,
         teacherName,
         'teacher',
@@ -371,7 +435,7 @@ export class ClassroomService {
       this.syncStatus.set('saved');
       return { success: true };
     } catch {
-      // If server is unreachable (e.g. Vercel serverless / read-only environment)
+      // If server is unreachable
       const fallback = this.initializeLocalClassroom(
         code.toUpperCase().trim() || 'INF-101',
         'Informatik 6b',
@@ -441,30 +505,71 @@ export class ClassroomService {
       },
     };
 
-    if (role === 'student') {
-      files[`/Klasse/${userName}`] = {
-        id: 'f_my_folder',
-        name: userName,
+    // Initialize individual folders and sample artworks for all students
+    const studentNames = ['Lukas', 'Emma', 'Noah', 'Mia', 'Leon'];
+    for (const sName of studentNames) {
+      const folderPath = `/Klasse/${sName}`;
+      files[folderPath] = {
+        id: `f_folder_${sName.toLowerCase()}`,
+        name: sName,
         type: 'folder',
         parentId: 'f_klasse',
-        path: `/Klasse/${userName}`,
-        ownerId: userId,
-        ownerName: userName,
+        path: folderPath,
+        ownerId: `user_student_${sName.toLowerCase()}`,
+        ownerName: sName,
         createdAt: now,
         updatedAt: now,
       };
+
+      // Add a sample drawing inside each student's folder for live screen monitor preview
+      const sampleArtPath = `${folderPath}/Mein Haus.png`;
+      files[sampleArtPath] = {
+        id: `f_art_${sName.toLowerCase()}`,
+        name: 'Mein Haus.png',
+        type: 'file',
+        parentId: `f_folder_${sName.toLowerCase()}`,
+        path: sampleArtPath,
+        ownerId: `user_student_${sName.toLowerCase()}`,
+        ownerName: sName,
+        fileType: 'image',
+        sizeBytes: 4096,
+        createdAt: now - 1800000,
+        updatedAt: now - 300000,
+        content: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200" viewBox="0 0 320 200"><rect width="320" height="200" fill="%230f172a"/><polygon points="160,30 80,100 240,100" fill="%23e11d48"/><rect x="100" y="100" width="120" height="80" fill="%23f59e0b"/><rect x="145" y="130" width="30" height="50" fill="%233b82f6"/><rect x="115" y="115" width="20" height="20" fill="%23ffffff"/><rect x="185" y="115" width="20" height="20" fill="%23ffffff"/><circle cx="270" cy="50" r="22" fill="%23facc15"/></svg>',
+      };
     }
+
+    const initialStudents: UserSession[] = studentNames.map((name, i) => ({
+      id: `user_student_${name.toLowerCase()}`,
+      name,
+      role: 'student' as const,
+      roomCode: code,
+      connectedAt: now - 3600000,
+      lastActive: now - (i * 15000), // All active recently
+      isHandRaised: name === 'Noah',
+      currentApp: name === 'Lukas' ? 'paint' : name === 'Emma' ? 'coding' : name === 'Noah' ? 'explorer' : name === 'Mia' ? 'logic-games' : 'desktop',
+      activityDetail: name === 'Lukas' ? 'Zeichnet "Mein Haus"' : name === 'Emma' ? 'RoboCode: Sensor-Schleife' : name === 'Noah' ? 'Ordner strukturiert' : name === 'Mia' ? 'Zeek the Geek: Level 2' : 'Arbeitsbereich bereit',
+      taskProgress: name === 'Lukas' ? 4 : name === 'Emma' ? 5 : name === 'Noah' ? 3 : name === 'Mia' ? 6 : 2,
+    }));
 
     const room: ClassroomState = {
       code,
       name: className,
       createdAt: now,
-      teacherId: role === 'teacher' ? userId : 'teacher_demo',
+      teacherId: role === 'teacher' ? userId : 'user_teacher_weber',
       teacherName: role === 'teacher' ? userName : 'Frau Weber',
-      students: role === 'student' ? [userSession] : [],
+      students: initialStudents,
       files,
       demoMode: { active: false, controlledBy: '', controlledByName: '' },
-      helpRequests: [],
+      helpRequests: [
+        {
+          id: 'help_init_noah',
+          studentId: 'user_student_noah',
+          studentName: 'Noah',
+          message: 'Hilfe bei den Datei-Rechten für die Gruppe!',
+          timestamp: now - 120000,
+        },
+      ],
       observingStudentId: null,
       chatMessages: [
         {
@@ -472,7 +577,7 @@ export class ClassroomService {
           senderId: 'system',
           senderName: 'System',
           senderRole: 'teacher',
-          text: 'Willkommen im Klassenraum! / ¡Bienvenido al aula virtual!',
+          text: 'Willkommen im vernetzten Klassenraum INF-101! / ¡Bienvenidos al aula virtual!',
           timestamp: now,
         },
       ],

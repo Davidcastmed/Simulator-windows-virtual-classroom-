@@ -50,24 +50,34 @@ import { WindowManagerService } from '../services/window-manager.service';
           }
         </div>
 
-        <!-- Quick Multi-user Actions (Open Chat & Open Whiteboard) -->
-        <div class="grid grid-cols-2 gap-2 mt-3">
+        <!-- Quick Multi-user Actions (Open Chat, Open Whiteboard, Monitor Screens) -->
+        <div class="grid grid-cols-3 gap-2 mt-3">
           <button
             type="button"
-            class="px-3 py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+            class="px-2 py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
             (click)="openChat()"
           >
             <mat-icon class="text-base !w-4 !h-4 flex items-center justify-center text-blue-400">forum</mat-icon>
-            <span>{{ t().peersWidget.openChatBtn }}</span>
+            <span class="truncate">{{ t().peersWidget.openChatBtn }}</span>
           </button>
 
           <button
             type="button"
-            class="px-3 py-2 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/30 text-purple-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+            class="px-2 py-2 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/30 text-purple-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
             (click)="openWhiteboard()"
           >
             <mat-icon class="text-base !w-4 !h-4 flex items-center justify-center text-purple-400">gesture</mat-icon>
-            <span>{{ t().peersWidget.openWhiteboardBtn }}</span>
+            <span class="truncate">{{ t().peersWidget.openWhiteboardBtn }}</span>
+          </button>
+
+          <button
+            type="button"
+            class="px-2 py-2 rounded-xl bg-sky-600/20 hover:bg-sky-600/30 border border-sky-500/30 text-sky-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+            (click)="openScreenMonitor()"
+            title="Ver pantalla de estudiantes en vivo"
+          >
+            <mat-icon class="text-base !w-4 !h-4 flex items-center justify-center text-sky-400">desktop_windows</mat-icon>
+            <span class="truncate">{{ i18n.isDe() ? 'Monitore' : 'Pantallas' }}</span>
           </button>
         </div>
 
@@ -143,8 +153,8 @@ import { WindowManagerService } from '../services/window-manager.service';
             class="p-3 rounded-2xl border transition-all"
             [class.bg-slate-850]="!isMe(s)"
             [class.border-slate-800]="!isMe(s)"
-            [class.bg-blue-950_30]="isMe(s)"
-            [class.border-blue-500_40]="isMe(s)"
+            [class.bg-blue-950/30]="isMe(s)"
+            [class.border-blue-500/40]="isMe(s)"
           >
             <div class="flex items-center justify-between">
               <!-- Left Info -->
@@ -186,9 +196,20 @@ import { WindowManagerService } from '../services/window-manager.service';
                 </div>
               </div>
 
-              <!-- Interactions Buttons (Salute / Star) -->
+              <!-- Interactions Buttons (Monitor / Salute / Star) -->
               @if (!isMe(s)) {
                 <div class="flex items-center gap-1">
+                  @if (isCurrentTeacher()) {
+                    <button
+                      type="button"
+                      class="px-2 py-1 rounded-lg bg-sky-600/20 hover:bg-sky-600/30 text-sky-300 border border-sky-500/30 text-[10px] font-semibold flex items-center gap-1 transition"
+                      (click)="openStudentScreen(s.id)"
+                      [title]="'Ver pantalla en vivo de ' + s.name"
+                    >
+                      <mat-icon class="text-xs !w-3.5 !h-3.5">desktop_windows</mat-icon>
+                      <span class="hidden sm:inline">Ver pantalla</span>
+                    </button>
+                  }
                   <button
                     type="button"
                     class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-transform active:scale-95"
@@ -300,6 +321,14 @@ export class PeersWidgetComponent {
 
   openWhiteboard(): void {
     this.windowManager.openWindow('whiteboard');
+  }
+
+  openScreenMonitor(): void {
+    this.windowManager.openWindow('screen-monitor');
+  }
+
+  openStudentScreen(studentId: string): void {
+    this.windowManager.openWindow('screen-monitor', undefined, { initialStudentId: studentId });
   }
 
   async greetUser(name: string): Promise<void> {

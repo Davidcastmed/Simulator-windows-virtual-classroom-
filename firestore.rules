@@ -47,7 +47,7 @@ service cloud.firestore {
              data.groupId is string && data.groupId.size() > 0 &&
              data.senderId is string && data.senderId.size() > 0 &&
              data.senderName is string && data.senderName.size() > 0 &&
-             data.text is string && data.text.size() > 0 && data.text.size() <= 1000;
+             data.text is string && data.text.size() <= 1000;
     }
 
     match /messages/{messageId} {

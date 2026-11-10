@@ -859,13 +859,7 @@ export class StudentScreenViewer implements OnInit {
 
     // Send instant message to the class/group chat
     try {
-      await this.firebase.sendInstantMessage(
-        'grp_inf_101',
-        teacher?.id || 'user_teacher_weber',
-        teacherName,
-        'teacher',
-        `[Asistencia a ${st.name}]: ${tip}`
-      );
+      await this.classroom.sendChatMessage(`[Asistencia a ${st.name}]: ${tip}`, 'text');
     } catch {
       // Ignore fallback
     }

@@ -249,6 +249,10 @@ export class FirebaseService {
     try {
       await this.syncAndSeedAllCollections();
       this.isConnected.set(true);
+      // Auto-connect real-time listener subscriptions for room INF-101
+      this.subscribeToGroups();
+      this.subscribeToGroupMessages('INF-101');
+      this.subscribeToCollaboration('INF-101');
     } catch {
       this.isConnected.set(false);
     }
@@ -264,12 +268,36 @@ export class FirebaseService {
    * - resources
    */
   async syncAndSeedAllCollections(): Promise<void> {
-    await this.syncAndSeedUsers();
-    await this.syncAndSeedGroups();
-    await this.syncAndSeedNotes();
-    await this.syncAndSeedTasks();
-    await this.syncAndSeedResources();
-    await this.syncAndSeedMessages();
+    try {
+      await this.syncAndSeedUsers();
+    } catch (e) {
+      console.warn('Sync users error:', e);
+    }
+    try {
+      await this.syncAndSeedGroups();
+    } catch (e) {
+      console.warn('Sync groups error:', e);
+    }
+    try {
+      await this.syncAndSeedNotes();
+    } catch (e) {
+      console.warn('Sync notes error:', e);
+    }
+    try {
+      await this.syncAndSeedTasks();
+    } catch (e) {
+      console.warn('Sync tasks error:', e);
+    }
+    try {
+      await this.syncAndSeedResources();
+    } catch (e) {
+      console.warn('Sync resources error:', e);
+    }
+    try {
+      await this.syncAndSeedMessages();
+    } catch (e) {
+      console.warn('Sync messages error:', e);
+    }
   }
 
   async syncAndSeedUsers(): Promise<RegisteredUser[]> {
@@ -607,7 +635,12 @@ export class FirebaseService {
           const msgs: FirestoreMessage[] = [];
           snapshot.forEach((d) => {
             const data = d.data() as FirestoreMessage;
-            if (data.groupId === groupId || data.groupId === 'grp_inf_101') {
+            if (
+              !data.groupId ||
+              data.groupId === groupId ||
+              data.groupId === 'INF-101' ||
+              data.groupId === 'grp_inf_101'
+            ) {
               msgs.push(data);
             }
           });
@@ -737,11 +770,18 @@ export class FirebaseService {
       timestamp: Date.now(),
     };
 
+    // Optimistic local update
+    this.activeMessages.update((prev) => {
+      if (prev.some((m) => m.id === id)) return prev;
+      return [...prev, msg].sort((a, b) => a.timestamp - b.timestamp);
+    });
+
     try {
       await setDoc(doc(db, path, id), msg);
       return msg;
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, path);
+      return msg;
     }
   }
 

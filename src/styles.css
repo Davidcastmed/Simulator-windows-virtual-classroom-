@@ -372,5 +372,32 @@ html, body {
   border-right: 2px solid rgba(255, 255, 255, 0.15);
 }
 
+/* Zeek smooth harmonic movement and walk cycles */
+.zeek-smooth-glide {
+  transition: left 210ms cubic-bezier(0.22, 1, 0.36, 1), top 210ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: left, top;
+}
+
+@keyframes zeek-step-harmonic-1 {
+  0% { transform: translateY(0) rotate(0deg) scale(1, 1); }
+  50% { transform: translateY(-3.5px) rotate(2deg) scale(0.98, 1.04); }
+  100% { transform: translateY(0) rotate(0deg) scale(1, 1); }
+}
+
+@keyframes zeek-step-harmonic-2 {
+  0% { transform: translateY(0) rotate(0deg) scale(1, 1); }
+  50% { transform: translateY(-3.5px) rotate(-2deg) scale(0.98, 1.04); }
+  100% { transform: translateY(0) rotate(0deg) scale(1, 1); }
+}
+
+.anim-zeek-step-1 {
+  animation: zeek-step-harmonic-1 210ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.anim-zeek-step-2 {
+  animation: zeek-step-harmonic-2 210ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+
 
 
