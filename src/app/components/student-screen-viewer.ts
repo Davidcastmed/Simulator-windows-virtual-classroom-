@@ -133,17 +133,24 @@ import type { UserSession, VirtualItem } from '../models/classroom.types';
             [class.hover:bg-slate-800]="selectedStudentId() !== st.id"
             (click)="selectStudent(st.id)"
           >
-            <!-- Avatar Initial -->
-            <span
-              class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
-              [class.bg-blue-600]="st.name === 'Lukas'"
-              [class.bg-pink-600]="st.name === 'Emma'"
-              [class.bg-amber-600]="st.name === 'Noah'"
-              [class.bg-purple-600]="st.name === 'Mia'"
-              [class.bg-emerald-600]="st.name === 'Leon'"
-            >
-              {{ st.name.charAt(0) }}
-            </span>
+            <!-- Avatar Initial with status dot -->
+            <div class="relative shrink-0">
+              <span
+                class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
+                [class.bg-blue-600]="st.name === 'Lukas'"
+                [class.bg-pink-600]="st.name === 'Emma'"
+                [class.bg-amber-600]="st.name === 'Noah'"
+                [class.bg-purple-600]="st.name === 'Mia'"
+                [class.bg-emerald-600]="st.name === 'Leon'"
+              >
+                {{ st.name.charAt(0) }}
+              </span>
+              <span
+                class="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-slate-900"
+                [class.bg-emerald-400]="st.isOnline"
+                [class.bg-slate-600]="!st.isOnline"
+              ></span>
+            </div>
 
             <span class="font-medium text-xs">{{ st.name }}</span>
 
@@ -254,7 +261,12 @@ import type { UserSession, VirtualItem } from '../models/classroom.types';
                 <!-- Monitor Top Bezel Bar with Webcam & Student Screen Title -->
                 <div class="px-4 py-2 bg-slate-950 border-b border-slate-800/90 flex items-center justify-between text-xs text-slate-300">
                   <div class="flex items-center gap-2">
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                    <span
+                      class="w-2.5 h-2.5 rounded-full"
+                      [class.bg-emerald-400]="student.isOnline"
+                      [class.animate-pulse]="student.isOnline"
+                      [class.bg-slate-500]="!student.isOnline"
+                    ></span>
                     <span class="font-mono text-[11px] text-slate-400">
                       {{ isDe() ? 'Bildschirm von' : 'Pantalla de' }} <strong class="text-white">{{ student.name }}</strong> (INF-101)
                     </span>
@@ -263,17 +275,82 @@ import type { UserSession, VirtualItem } from '../models/classroom.types';
                   <!-- Center webcam dot -->
                   <div class="w-2 h-2 rounded-full bg-slate-800 border border-slate-700 shadow-inner"></div>
 
-                  <div class="flex items-center gap-2 font-mono text-[11px] text-slate-400">
+                  <div class="flex items-center gap-2 font-mono text-[11px]">
                     <span>1920×1080</span>
                     <span>•</span>
-                    <span class="text-emerald-400">{{ isDe() ? 'Live verbunden' : 'Conexión activa' }}</span>
+                    @if (student.isOnline) {
+                      <span class="text-emerald-400 font-bold flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                        <span>{{ isDe() ? 'Live verbunden' : 'Conexión activa (En vivo)' }}</span>
+                      </span>
+                    } @else {
+                      <span class="text-slate-400 flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+                        <span>{{ isDe() ? 'Offline / Standby' : '⚪ Standby (Desconectado)' }}</span>
+                      </span>
+                    }
                   </div>
                 </div>
 
                 <!-- Simulated Desktop Screen Interior -->
                 <div class="relative bg-slate-950 min-h-[460px] sm:min-h-[500px] flex flex-col overflow-hidden">
-                  <!-- Simulated Window on Student's Screen based on their active app -->
-                  @switch (normalizeApp(student.currentApp)) {
+                  @if (!student.isOnline) {
+                    <!-- STANDBY SCREEN WHEN STUDENT ACCOUNT IS NOT OPEN -->
+                    <div class="flex-1 flex flex-col items-center justify-center p-8 bg-slate-950 text-center select-none">
+                      <div class="w-16 h-16 rounded-3xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500 mb-3 shadow-inner">
+                        <mat-icon class="text-3xl !w-8 !h-8 text-slate-600">power_settings_new</mat-icon>
+                      </div>
+                      <h4 class="text-sm font-bold text-slate-200 mb-1">
+                        {{ isDe() ? 'Bildschirm im Standby-Modus' : 'Monitor en Modo de Espera (Desconectado)' }}
+                      </h4>
+                      <p class="text-xs text-slate-500 max-w-md leading-relaxed mb-4">
+                        {{ isDe() ? 'Der Schüler hat aktuell keine geöffnete Sitzung im Browser. Das Live-Bild wird sofort übertragen, sobald der Schüler sich anmeldet.' : 'El alumno no tiene una sesión de navegador abierta en este momento. La pantalla se activará en tiempo real en cuanto inicie sesión.' }}
+                      </p>
+                      <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-[11px] text-slate-400">
+                        <span class="w-2 h-2 rounded-full bg-slate-600"></span>
+                        <span>{{ isDe() ? 'Warte auf Verbindung von' : 'Esperando sesión activa de' }} <strong>{{ student.name }}</strong>...</span>
+                      </div>
+                    </div>
+                  } @else {
+                    <!-- Hand raised priority alert banner -->
+                    @if (student.isHandRaised) {
+                      <div class="px-4 py-2.5 bg-amber-500 text-slate-950 font-bold text-xs flex items-center justify-between border-b border-amber-600 shadow-lg z-20">
+                        <div class="flex items-center gap-2">
+                          <span class="text-lg animate-bounce">✋</span>
+                          <span>
+                            {{ isDe() ? 'Meldung / Braucht Hilfe!' : '¡Mano levantada para participar o solicitar ayuda!' }}
+                            @if (student.helpMessage) {
+                              <span class="font-normal italic ml-1">"{{ student.helpMessage }}"</span>
+                            }
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          class="px-3 py-1 rounded-xl bg-slate-950 text-amber-300 hover:bg-slate-900 text-xs font-bold transition shadow"
+                          (click)="resolveHelp(student.id)"
+                        >
+                          {{ isDe() ? 'Atender y Bajar Mano' : 'Atender y Bajar Mano' }}
+                        </button>
+                      </div>
+                    }
+
+                    @if (student.screenSnapshot) {
+                      <div class="flex-1 bg-black flex items-center justify-center relative overflow-hidden p-3">
+                        <img
+                          [src]="student.screenSnapshot"
+                          [alt]="student.name + ' Screen'"
+                          class="max-w-full max-h-full object-contain rounded-xl shadow-2xl border border-slate-800"
+                        />
+                        <div class="absolute bottom-4 right-6 pointer-events-none flex items-center gap-1.5 animate-pulse">
+                          <mat-icon class="text-emerald-400 text-base drop-shadow-md">near_me</mat-icon>
+                          <span class="px-2 py-0.5 rounded bg-emerald-600 text-[10px] font-bold text-white shadow">
+                            {{ student.name }} (Live)
+                          </span>
+                        </div>
+                      </div>
+                    } @else {
+                      <!-- Simulated Window on Student's Screen based on their active app -->
+                      @switch (normalizeApp(student.currentApp)) {
                     <!-- CASE 1: PAINT APP SCREEN -->
                     @case ('paint') {
                       <div class="flex-1 flex flex-col bg-slate-900 text-slate-100">
@@ -526,11 +603,13 @@ import type { UserSession, VirtualItem } from '../models/classroom.types';
                       </div>
                     }
                   }
-                </div>
-              </div>
+                }
+              }
             </div>
-          }
-        }
+          </div>
+        </div>
+      }
+    }
 
         <!-- ============================================================== -->
         <!-- VIEW 2: MULTI-SCREEN GRID (TODAS LAS PANTALLAS A LA VEZ) -->
@@ -552,7 +631,7 @@ import type { UserSession, VirtualItem } from '../models/classroom.types';
 
               <span class="text-xs text-emerald-400 font-medium flex items-center gap-1">
                 <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span>{{ students().length }} {{ isDe() ? 'Bildschirme aktiv' : 'pantallas activas' }}</span>
+                <span>{{ onlineCount() }} {{ isDe() ? 'von' : 'de' }} {{ students().length }} {{ isDe() ? 'Bildschirme aktiv' : 'alumnos conectados en vivo' }}</span>
               </span>
             </div>
 
@@ -584,18 +663,32 @@ import type { UserSession, VirtualItem } from '../models/classroom.types';
                             <mat-icon class="text-amber-400 text-xs !w-3.5 !h-3.5 animate-bounce">pan_tool</mat-icon>
                           }
                         </div>
-                        <div class="text-[10px] text-slate-400">
-                          {{ getAppDisplay(st) }}
+                        <div class="text-[10px]" [class.text-emerald-400]="st.isOnline" [class.text-slate-500]="!st.isOnline">
+                          {{ st.isOnline ? getAppDisplay(st) : (isDe() ? 'Standby (Offline)' : 'Desconectado') }}
                         </div>
                       </div>
                     </div>
 
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-emerald-500/30"></span>
+                    <span
+                      class="w-2.5 h-2.5 rounded-full"
+                      [class.bg-emerald-400]="st.isOnline"
+                      [class.ring-2]="st.isOnline"
+                      [class.ring-emerald-500_30]="st.isOnline"
+                      [class.bg-slate-600]="!st.isOnline"
+                      [title]="st.isOnline ? 'En línea' : 'Desconectado'"
+                    ></span>
                   </div>
 
                   <!-- Mini Screen Preview Window -->
                   <div class="w-full aspect-16/10 rounded-xl bg-slate-950 border border-slate-800 overflow-hidden relative flex items-center justify-center group-hover:ring-2 group-hover:ring-sky-500/40 transition">
-                    @if (getStudentDrawing(st.name); as drawing) {
+                    @if (!st.isOnline) {
+                      <div class="flex flex-col items-center justify-center gap-1 text-slate-500 bg-slate-950/80 p-2 text-center w-full h-full">
+                        <mat-icon class="text-xl text-slate-600">power_settings_new</mat-icon>
+                        <span class="text-[9px] text-slate-500 font-mono">Standby · Desconectado</span>
+                      </div>
+                    } @else if (st.screenSnapshot) {
+                      <img [src]="st.screenSnapshot" [alt]="st.name + ' Screen'" class="w-full h-full object-contain p-1" />
+                    } @else if (getStudentDrawing(st.name); as drawing) {
                       <img [src]="drawing.thumbnail || drawing.content" [alt]="drawing.name" class="w-full h-full object-contain p-1" />
                     } @else if (normalizeApp(st.currentApp) === 'coding') {
                       <div class="p-2 w-full h-full font-mono text-[8px] text-indigo-300 leading-tight bg-slate-950">
@@ -605,9 +698,9 @@ import type { UserSession, VirtualItem } from '../models/classroom.types';
                         <div class="pl-2 text-sky-400">drive(80)</div>
                       </div>
                     } @else {
-                      <div class="flex flex-col items-center justify-center gap-1 text-slate-500">
-                        <mat-icon class="text-xl text-slate-600">desktop_windows</mat-icon>
-                        <span class="text-[9px]">{{ st.currentApp || 'Desktop' }}</span>
+                      <div class="flex flex-col items-center justify-center gap-1 text-slate-400">
+                        <mat-icon class="text-xl text-sky-400">desktop_windows</mat-icon>
+                        <span class="text-[9px] font-medium text-slate-300">{{ st.currentApp || 'Desktop' }}</span>
                       </div>
                     }
 
@@ -707,7 +800,11 @@ export class StudentScreenViewer implements OnInit {
   private toastTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly students = computed(() => {
-    return this.classroom.students();
+    return this.classroom.onlineStudents();
+  });
+
+  readonly onlineCount = computed(() => {
+    return this.students().filter((s) => s.isOnline).length;
   });
 
   readonly currentStudent = computed(() => {
@@ -859,7 +956,7 @@ export class StudentScreenViewer implements OnInit {
 
     // Send instant message to the class/group chat
     try {
-      await this.classroom.sendChatMessage(`[Asistencia a ${st.name}]: ${tip}`, 'text');
+      await this.classroom.sendChatMessage(`[${teacherName} -> ${st.name}]: ${tip}`, 'text');
     } catch {
       // Ignore fallback
     }

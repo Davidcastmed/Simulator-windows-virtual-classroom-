@@ -47,12 +47,19 @@
         (keydown.enter)="onIconDblClick(icon)"
       >
         <!-- Icon itself: Free-floating with optical drop-shadow, no background box -->
-        <mat-icon
-          class="text-4xl sm:text-5xl !w-10 !h-10 sm:!w-12 sm:!h-12 flex items-center justify-center filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.85)] group-hover:scale-110 group-hover:drop-shadow-[0_6px_14px_rgba(0,0,0,0.95)] transition-transform duration-200"
-          [class]="icon.iconColor"
-        >
-          {{ icon.icon }}
-        </mat-icon>
+        <div class="relative flex items-center justify-center">
+          <mat-icon
+            class="text-4xl sm:text-5xl !w-10 !h-10 sm:!w-12 sm:!h-12 flex items-center justify-center filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.85)] group-hover:scale-110 group-hover:drop-shadow-[0_6px_14px_rgba(0,0,0,0.95)] transition-transform duration-200"
+            [class]="icon.iconColor"
+          >
+            {{ icon.icon }}
+          </mat-icon>
+          @if (icon.badge && icon.badge > 0) {
+            <span class="absolute -top-1 -right-2 px-1.5 py-0.5 rounded-full bg-amber-500 text-slate-950 font-black text-[10px] animate-bounce shadow-md">
+              ✋ {{ icon.badge }}
+            </span>
+          }
+        </div>
 
         <!-- Name below icon: Clean typography with subtle drop-shadow, no box around it -->
         <span
@@ -144,4 +151,12 @@
   @if (wallpaperService.isPickerOpen()) {
     <app-wallpaper-dialog />
   }
+
+  <!-- Microsoft Teams Style Add Student Modal -->
+  @if (classroom.isAddStudentModalOpen()) {
+    <app-add-student-modal />
+  }
+
+  <!-- Teacher Floating Help Alert Toast with Audio Chime -->
+  <app-teacher-help-toast />
 </div>

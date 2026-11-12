@@ -9,7 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import type { WindowState } from '../models/classroom.types';
+import type { TeamsPresenceStatus, WindowState } from '../models/classroom.types';
 import { ClassroomService } from '../services/classroom.service';
 import { I18nService } from '../services/i18n.service';
 import { WallpaperService } from '../services/wallpaper.service';
@@ -157,6 +157,22 @@ import { WindowManagerService } from '../services/window-manager.service';
           </button>
         }
 
+        <!-- Teacher Help Requests Indicator in Taskbar -->
+        @if (classroom.isTeacher()) {
+          @if (teacherHelpRequestsCount() > 0) {
+            <button
+              id="taskbar-btn-teacher-help"
+              type="button"
+              class="px-2.5 sm:px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5 transition-all text-xs border shrink-0 bg-amber-500 hover:bg-amber-400 text-slate-950 border-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.7)] animate-pulse active:scale-95"
+              (click)="openPeersWidget()"
+              [title]="'Hay ' + teacherHelpRequestsCount() + ' alumno(s) esperando respuesta. Clic para abrir.'"
+            >
+              <mat-icon class="text-sm !w-4 !h-4 flex items-center justify-center">pan_tool</mat-icon>
+              <span>{{ teacherHelpRequestsCount() }} {{ teacherHelpRequestsCount() === 1 ? (i18n.isDe() ? 'Hilferuf' : 'Mano levantada') : (i18n.isDe() ? 'Hilferufe' : 'Manos levantadas') }}</span>
+            </button>
+          }
+        }
+
         <!-- Room Code Pill -->
         @if (classroom.classroom(); as room) {
           <div
@@ -217,6 +233,141 @@ import { WindowManagerService } from '../services/window-manager.service';
           </span>
         </div>
 
+        <!-- Teams User Avatar with Status Dot & Quick Popover Menu -->
+        <div class="relative">
+          <button
+            id="taskbar-user-avatar-btn"
+            type="button"
+            class="h-8 sm:h-9 px-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-750 flex items-center gap-1.5 transition shadow-sm active:scale-95"
+            (click)="toggleUserMenu()"
+            [title]="(currentUser()?.name || 'Usuario') + ' - Teams Profile'"
+          >
+            <div class="relative w-6 h-6 rounded-full bg-[#5b5fc7] text-white flex items-center justify-center font-bold text-[11px] shadow-inner">
+              {{ currentUser()?.name?.charAt(0)?.toUpperCase() || '?' }}
+              <!-- Teams Presence Dot -->
+              <span
+                class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-zinc-950 shadow-sm"
+                [class]="myPresenceDotClass()"
+              ></span>
+            </div>
+            <span class="hidden md:inline text-xs font-semibold text-zinc-200 truncate max-w-[80px] lg:max-w-[110px]">
+              {{ currentUser()?.name }}
+            </span>
+            <mat-icon class="text-zinc-400 text-xs !w-3 !h-3 flex items-center justify-center">expand_less</mat-icon>
+          </button>
+
+          <!-- Teams Profile & Action Popover -->
+          @if (isUserMenuOpen()) {
+            <div
+              id="taskbar-user-popover"
+              class="absolute bottom-11 right-0 w-72 bg-gradient-to-b from-[#1f212d] to-[#14151e] border border-slate-700/80 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.85)] p-3 text-slate-100 z-50 animate-in fade-in slide-in-from-bottom-2 duration-150"
+            >
+              <!-- Popover Header -->
+              <div class="flex items-center gap-2.5 pb-2.5 border-b border-slate-700/60">
+                <div class="relative">
+                  <div class="w-11 h-11 rounded-full bg-[#5b5fc7] text-white flex items-center justify-center font-bold text-base shadow">
+                    {{ currentUser()?.name?.charAt(0)?.toUpperCase() || '?' }}
+                  </div>
+                  <span
+                    class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#1f212d]"
+                    [class]="myPresenceDotClass()"
+                  ></span>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <div class="text-xs font-bold text-white truncate">{{ currentUser()?.name }}</div>
+                  <div class="text-[11px] text-slate-400 flex items-center gap-1.5">
+                    <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-[#5b5fc7]/30 text-[#c2c6ff] border border-[#5b5fc7]/40">
+                      {{ isCurrentTeacher() ? t().roles.teacher : t().roles.student }}
+                    </span>
+                    @if (classroom.classroom()?.code; as code) {
+                      <span class="font-mono text-sky-400 text-[10px]">#{{ code }}</span>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <!-- Teams Status Switcher -->
+              <div class="py-2.5 border-b border-slate-700/60">
+                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 px-1">
+                  {{ i18n.isDe() ? 'Teams Status festlegen' : 'Estado de Microsoft Teams' }}
+                </div>
+                <div class="grid grid-cols-2 gap-1 text-[11px]">
+                  <button
+                    type="button"
+                    class="px-2 py-1 rounded-lg text-left flex items-center gap-1.5 hover:bg-slate-800 transition"
+                    [class.bg-slate-800]="classroom.myPresenceStatus() === 'available'"
+                    (click)="setPresence('available')"
+                  >
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span>{{ i18n.isDe() ? 'Verfügbar' : 'Disponible' }}</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="px-2 py-1 rounded-lg text-left flex items-center gap-1.5 hover:bg-slate-800 transition"
+                    [class.bg-slate-800]="classroom.myPresenceStatus() === 'busy'"
+                    (click)="setPresence('busy')"
+                  >
+                    <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                    <span>{{ i18n.isDe() ? 'Beschäftigt' : 'Ocupado' }}</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="px-2 py-1 rounded-lg text-left flex items-center gap-1.5 hover:bg-slate-800 transition"
+                    [class.bg-slate-800]="classroom.myPresenceStatus() === 'away'"
+                    (click)="setPresence('away')"
+                  >
+                    <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                    <span>{{ i18n.isDe() ? 'Abwesend' : 'Ausente' }}</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="px-2 py-1 rounded-lg text-left flex items-center gap-1.5 hover:bg-slate-800 transition"
+                    [class.bg-slate-800]="classroom.myPresenceStatus() === 'dnd'"
+                    (click)="setPresence('dnd')"
+                  >
+                    <span class="w-2 h-2 rounded-full bg-red-600"></span>
+                    <span>{{ i18n.isDe() ? 'Nicht stören' : 'No molestar' }}</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Main Action: AGREGAR ESTUDIANTE (Requested by user) -->
+              <div class="py-2.5 border-b border-slate-700/60">
+                <button
+                  id="taskbar-btn-add-student-popover"
+                  type="button"
+                  class="w-full px-3 py-2 rounded-xl bg-gradient-to-r from-[#5b5fc7] to-[#4f53b8] hover:from-[#4f53b8] hover:to-[#43479e] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md transition-all active:scale-95"
+                  (click)="openAddStudentFromAvatar()"
+                >
+                  <mat-icon class="text-sm !w-4 !h-4 flex items-center justify-center">person_add</mat-icon>
+                  <span>{{ i18n.isDe() ? '➕ Schüler hinzufügen' : '➕ Agregar Estudiante' }}</span>
+                </button>
+              </div>
+
+              <!-- Navigation shortcuts -->
+              <div class="pt-2 flex flex-col gap-1">
+                <button
+                  type="button"
+                  class="w-full px-2.5 py-1.5 rounded-lg text-left text-xs text-slate-300 hover:text-white hover:bg-slate-800 flex items-center gap-2 transition"
+                  (click)="openPeersFromAvatar()"
+                >
+                  <mat-icon class="text-sm !w-4 !h-4 text-[#7f85f5]">groups</mat-icon>
+                  <span>{{ i18n.isDe() ? 'Mitschüler ansehen (Teams)' : 'Ver Alumnos Conectados (Teams)' }}</span>
+                </button>
+
+                <button
+                  type="button"
+                  class="w-full px-2.5 py-1.5 rounded-lg text-left text-xs text-rose-400 hover:bg-rose-500/10 flex items-center gap-2 transition"
+                  (click)="logoutFromAvatar()"
+                >
+                  <mat-icon class="text-sm !w-4 !h-4 text-rose-400">power_settings_new</mat-icon>
+                  <span>{{ t().startMenu.logout }}</span>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+
         <!-- Clock & Date -->
         <div id="taskbar-clock" class="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg bg-zinc-900/90 border border-zinc-800/80 text-right leading-tight cursor-default shadow-sm">
           <div class="text-xs font-bold text-zinc-200 font-mono">{{ currentTime() }}</div>
@@ -244,10 +395,67 @@ export class Taskbar implements OnInit, OnDestroy {
 
   readonly isHandRaised = computed(() => {
     const user = this.classroom.currentUser();
-    const room = this.classroom.classroom();
-    if (!user || !room) return false;
-    return room.helpRequests.some((h) => h.studentId === user.id);
+    if (!user) return false;
+    return this.classroom.activeHelpRequests().some((h) => h.studentId === user.id);
   });
+
+  readonly teacherHelpRequestsCount = computed(() => {
+    return this.classroom.activeHelpRequests().length;
+  });
+
+  openPeersWidget(): void {
+    this.wm.openWindow(
+      'peers',
+      this.i18n.isDe() ? 'Multischüler Online' : 'Compañeros del Aula',
+    );
+  }
+
+  readonly isUserMenuOpen = signal<boolean>(false);
+  readonly currentUser = computed(() => this.classroom.currentUser());
+  readonly isCurrentTeacher = computed(() => this.currentUser()?.role === 'teacher');
+
+  readonly myPresenceDotClass = computed(() => {
+    const status = this.classroom.myPresenceStatus();
+    switch (status) {
+      case 'available':
+        return 'bg-emerald-500';
+      case 'busy':
+        return 'bg-rose-500';
+      case 'away':
+        return 'bg-amber-400';
+      case 'dnd':
+        return 'bg-red-600';
+      case 'presenting':
+        return 'bg-purple-500';
+      case 'offline':
+      default:
+        return 'bg-slate-500';
+    }
+  });
+
+  toggleUserMenu(): void {
+    this.isUserMenuOpen.update((v) => !v);
+  }
+
+  setPresence(status: TeamsPresenceStatus): void {
+    this.classroom.setMyPresence(status);
+  }
+
+  openAddStudentFromAvatar(): void {
+    this.isUserMenuOpen.set(false);
+    this.classroom.openAddStudentModal();
+  }
+
+  openPeersFromAvatar(): void {
+    this.isUserMenuOpen.set(false);
+    this.wm.openWindow('peers');
+  }
+
+  logoutFromAvatar(): void {
+    this.isUserMenuOpen.set(false);
+    this.classroom.leaveClassroom();
+    this.wm.closeAll();
+  }
 
   ngOnInit(): void {
     this.updateClock();

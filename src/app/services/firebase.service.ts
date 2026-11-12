@@ -14,6 +14,7 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 import firebaseConfig from '../../../firebase-applet-config.json';
+import type { TeamsPresenceStatus } from '../models/classroom.types';
 
 export enum OperationType {
   CREATE = 'create',
@@ -80,6 +81,14 @@ export interface RegisteredUser {
   roomCode: string;
   active: boolean;
   createdAt: number;
+  lastActive?: number;
+  currentApp?: string;
+  presenceStatus?: TeamsPresenceStatus;
+  isHandRaised?: boolean;
+  thumbnail?: string;
+  screenSnapshot?: string;
+  taskProgress?: number;
+  activityDetail?: string;
 }
 
 export interface FirestoreGroup {
@@ -89,7 +98,26 @@ export interface FirestoreGroup {
   teacherId: string;
   teacherName: string;
   studentIds: string[];
-  members: { id: string; name: string; role: 'student' | 'teacher'; lastActive?: number }[];
+  members: {
+    id: string;
+    name: string;
+    role: 'student' | 'teacher';
+    lastActive?: number;
+    isHandRaised?: boolean;
+    currentApp?: string;
+    presenceStatus?: TeamsPresenceStatus;
+    thumbnail?: string;
+    screenSnapshot?: string;
+    taskProgress?: number;
+    activityDetail?: string;
+  }[];
+  helpQueue?: {
+    id: string;
+    studentId: string;
+    studentName: string;
+    message: string;
+    timestamp: number;
+  }[];
   icon: string;
   color: string;
   active: boolean;
@@ -233,6 +261,7 @@ export class FirebaseService {
   readonly activeTasks = signal<FirestoreTask[]>([]);
   readonly activeResources = signal<FirestoreResource[]>([]);
 
+  private unsubUsers: Unsubscribe | null = null;
   private unsubMessages: Unsubscribe | null = null;
   private unsubGroups: Unsubscribe | null = null;
   private unsubNotes: Unsubscribe | null = null;
@@ -250,6 +279,7 @@ export class FirebaseService {
       await this.syncAndSeedAllCollections();
       this.isConnected.set(true);
       // Auto-connect real-time listener subscriptions for room INF-101
+      this.subscribeToUsers();
       this.subscribeToGroups();
       this.subscribeToGroupMessages('INF-101');
       this.subscribeToCollaboration('INF-101');
@@ -617,6 +647,156 @@ export class FirebaseService {
   // -------------------------------------------------------------
 
   /**
+   * Conecta en tiempo real a los usuarios registrados en Firestore.
+   * Cualquier nuevo estudiante o cambio de presencia se refleja de inmediato en todos los clientes.
+   */
+  subscribeToUsers(): void {
+    if (this.unsubUsers) {
+      this.unsubUsers();
+      this.unsubUsers = null;
+    }
+
+    const path = 'users';
+    try {
+      const col = collection(db, path);
+      this.unsubUsers = onSnapshot(
+        col,
+        (snapshot) => {
+          const list: RegisteredUser[] = [];
+          snapshot.forEach((d) => list.push(d.data() as RegisteredUser));
+          if (list.length > 0) {
+            this.registeredUsers.set(list);
+          }
+        },
+        (error) => {
+          console.warn('Users snapshot error:', error);
+        },
+      );
+    } catch (err) {
+      console.warn('Could not subscribe to users:', err);
+    }
+  }
+
+  /**
+   * Actualiza el estado de presencia, aplicación activa y mano levantada en Firestore
+   */
+  async updateStudentPresence(
+    userId: string,
+    data: {
+      lastActive?: number;
+      currentApp?: string;
+      presenceStatus?: TeamsPresenceStatus;
+      isHandRaised?: boolean;
+      thumbnail?: string;
+      screenSnapshot?: string;
+      taskProgress?: number;
+      activityDetail?: string;
+    },
+  ): Promise<void> {
+    const path = 'users';
+    try {
+      const userRef = doc(db, path, userId);
+      const snap = await getDoc(userRef);
+      if (snap.exists()) {
+        const cleanData: Record<string, unknown> = {};
+        for (const [key, val] of Object.entries(data)) {
+          if (val !== undefined) {
+            cleanData[key] = val;
+          }
+        }
+        await updateDoc(userRef, cleanData);
+      }
+    } catch (err) {
+      console.warn('Could not update user presence in Firestore:', err);
+    }
+
+    // Actualizar también en el grupo de Firestore para que todos los alumnos/docentes conectados lo vean
+    const grp = this.currentGroup();
+    if (grp) {
+      try {
+        const grpRef = doc(db, 'groups', grp.id);
+        const members = (grp.members || []).map((m) => {
+          if (m.id === userId) {
+            return {
+              ...m,
+              lastActive: data.lastActive !== undefined ? data.lastActive : m.lastActive,
+              isHandRaised: data.isHandRaised !== undefined ? data.isHandRaised : m.isHandRaised,
+              currentApp: data.currentApp !== undefined ? data.currentApp : m.currentApp,
+              presenceStatus: data.presenceStatus !== undefined ? data.presenceStatus : m.presenceStatus,
+              thumbnail: data.thumbnail !== undefined ? data.thumbnail : m.thumbnail,
+              screenSnapshot: data.screenSnapshot !== undefined ? data.screenSnapshot : m.screenSnapshot,
+              taskProgress: data.taskProgress !== undefined ? data.taskProgress : m.taskProgress,
+              activityDetail: data.activityDetail !== undefined ? data.activityDetail : m.activityDetail,
+            };
+          }
+          return m;
+        });
+        await updateDoc(grpRef, { members, updatedAt: Date.now() });
+      } catch (err) {
+        console.warn('Could not update member presence in group:', err);
+      }
+    }
+  }
+
+  /**
+   * Levanta la mano en la cola de participación de Firestore
+   */
+  async raiseHand(studentId: string, studentName: string, message = 'Braucht Hilfe'): Promise<void> {
+    await this.updateStudentPresence(studentId, {
+      isHandRaised: true,
+      lastActive: Date.now(),
+      presenceStatus: 'busy',
+    });
+
+    const grp = this.currentGroup();
+    if (grp) {
+      const path = 'groups';
+      try {
+        const ref = doc(db, path, grp.id);
+        const prevQueue = grp.helpQueue || [];
+        const exists = prevQueue.some((h) => h.studentId === studentId);
+        const helpQueue = exists
+          ? prevQueue
+          : [
+              ...prevQueue,
+              {
+                id: 'help_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+                studentId,
+                studentName,
+                message,
+                timestamp: Date.now(),
+              },
+            ];
+        await updateDoc(ref, { helpQueue, updatedAt: Date.now() });
+      } catch (err) {
+        console.warn('Error updating helpQueue in Firestore:', err);
+      }
+    }
+  }
+
+  /**
+   * Baja la mano del estudiante en Firestore
+   */
+  async lowerHand(studentId: string): Promise<void> {
+    await this.updateStudentPresence(studentId, {
+      isHandRaised: false,
+      lastActive: Date.now(),
+    });
+
+    const grp = this.currentGroup();
+    if (grp && grp.helpQueue) {
+      const path = 'groups';
+      try {
+        const ref = doc(db, path, grp.id);
+        const helpQueue = grp.helpQueue.filter((h) => h.studentId !== studentId);
+        await updateDoc(ref, { helpQueue, updatedAt: Date.now() });
+      } catch (err) {
+        console.warn('Error lowering hand in Firestore:', err);
+      }
+    }
+  }
+
+  /**
    * Conecta en tiempo real a los mensajes instantáneos de un grupo
    */
   subscribeToGroupMessages(groupId: string): void {
@@ -859,6 +1039,44 @@ export class FirebaseService {
       }
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, path);
+    }
+  }
+
+  /**
+   * Registra y persiste un nuevo estudiante en la base de datos Firestore
+   */
+  async addStudentUser(name: string, roomCode = 'INF-101'): Promise<RegisteredUser> {
+    const path = 'users';
+    const clean = name.trim();
+    const id = 'user_student_' + clean.toLowerCase().replace(/[^a-z0-9]/g, '_') + '_' + Math.random().toString(36).substring(2, 5);
+    const newUser: RegisteredUser = {
+      id,
+      username: clean,
+      displayName: clean,
+      role: 'student',
+      roomCode,
+      active: true,
+      createdAt: Date.now(),
+    };
+
+    // Actualización reactiva optimista
+    this.registeredUsers.update((prev) => {
+      if (prev.some((u) => u.id === id || u.username.toLowerCase() === clean.toLowerCase())) return prev;
+      return [...prev, newUser];
+    });
+
+    // Vincular al grupo activo en Firestore
+    const grp = this.currentGroup();
+    if (grp) {
+      await this.addStudentToGroup(grp.id, id, clean);
+    }
+
+    try {
+      await setDoc(doc(db, path, id), newUser);
+      return newUser;
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, path);
+      return newUser;
     }
   }
 

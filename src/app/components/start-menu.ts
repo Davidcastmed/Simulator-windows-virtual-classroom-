@@ -273,27 +273,49 @@ import { WindowManagerService } from '../services/window-manager.service';
 
       <!-- User Profile & Leave bar (Dark metal footer) -->
       <div class="p-3 border-t border-zinc-750 bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <div class="w-7 h-7 rounded-full bg-zinc-700 border border-zinc-500 text-white flex items-center justify-center font-bold text-xs shadow-inner">
-            {{ classroom.currentUser()?.name?.charAt(0)?.toUpperCase() }}
+        <button
+          type="button"
+          class="flex items-center gap-2 cursor-pointer group text-left bg-transparent border-0 p-0 m-0 focus:outline-none"
+          (click)="openAddStudent()"
+          [title]="i18n.isDe() ? 'Schüler hinzufügen' : 'Agregar Estudiante'"
+        >
+          <div class="relative">
+            <div class="w-8 h-8 rounded-full bg-[#5b5fc7] border border-[#7f85f5]/60 text-white flex items-center justify-center font-bold text-xs shadow-inner group-hover:scale-105 transition-transform">
+              {{ classroom.currentUser()?.name?.charAt(0)?.toUpperCase() }}
+            </div>
+            <!-- Teams status dot -->
+            <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border border-zinc-950"></span>
           </div>
-          <div class="truncate max-w-[130px]">
-            <div class="text-xs font-bold text-zinc-200 truncate">{{ classroom.currentUser()?.name }}</div>
+          <div class="truncate max-w-[110px]">
+            <div class="text-xs font-bold text-zinc-200 truncate group-hover:text-white">{{ classroom.currentUser()?.name }}</div>
             <div class="text-[10px] text-zinc-400 truncate">
               {{ classroom.isTeacher() ? t().roles.teacher : t().roles.student }}
             </div>
           </div>
-        </div>
-
-        <button
-          id="btn-start-logout"
-          type="button"
-          class="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-zinc-800 border border-transparent hover:border-zinc-700 transition-colors"
-          [title]="t().startMenu.logout"
-          (click)="onLogout()"
-        >
-          <mat-icon class="text-base !w-4 !h-4 flex items-center justify-center">power_settings_new</mat-icon>
         </button>
+
+        <div class="flex items-center gap-1.5">
+          <button
+            id="btn-start-add-student"
+            type="button"
+            class="px-2 py-1 rounded-lg bg-[#5b5fc7]/20 hover:bg-[#5b5fc7]/40 text-[#c2c6ff] border border-[#5b5fc7]/40 text-[11px] font-semibold flex items-center gap-1 transition-colors active:scale-95 shadow-sm"
+            (click)="openAddStudent()"
+            [title]="i18n.isDe() ? 'Neuen Schüler hinzufügen' : 'Agregar nuevo estudiante a la clase'"
+          >
+            <mat-icon class="text-xs !w-3.5 !h-3.5">person_add</mat-icon>
+            <span class="hidden sm:inline">{{ i18n.isDe() ? '+ Schüler' : '+ Alumno' }}</span>
+          </button>
+
+          <button
+            id="btn-start-logout"
+            type="button"
+            class="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-zinc-800 border border-transparent hover:border-zinc-700 transition-colors"
+            [title]="t().startMenu.logout"
+            (click)="onLogout()"
+          >
+            <mat-icon class="text-base !w-4 !h-4 flex items-center justify-center">power_settings_new</mat-icon>
+          </button>
+        </div>
       </div>
     </div>
   `,
@@ -332,6 +354,11 @@ export class StartMenu {
   ): void {
     this.wm.openWindow(appType, undefined, params);
     this.closeMenu.emit();
+  }
+
+  openAddStudent(): void {
+    this.closeMenu.emit();
+    this.classroom.openAddStudentModal();
   }
 
   onLogout(): void {

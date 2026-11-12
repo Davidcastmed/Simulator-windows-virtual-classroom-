@@ -687,6 +687,7 @@ export class PaintApp implements AfterViewInit, OnDestroy {
 
     // Initial undo frame
     this.saveState();
+    this.classroom.reportActivity('paint', 'Zeichnet in Paint');
 
     // Check if initial file was provided to open
     const file = this.initialFile();
@@ -1264,12 +1265,36 @@ export class PaintApp implements AfterViewInit, OnDestroy {
     img.src = src;
   }
 
+  private broadcastDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
   private updateActivity(): void {
     this.activity.recordPaintActivity({
       colorCount: this.usedColors.size,
       shapeCount: this.shapeCounter,
       hasDrawn: this.hasDrawnSomething,
     });
+
+    if (this.hasDrawnSomething) {
+      if (this.broadcastDebounceTimer) clearTimeout(this.broadcastDebounceTimer);
+      this.broadcastDebounceTimer = setTimeout(() => {
+        try {
+          const canvas = this.canvasRef()?.nativeElement;
+          if (canvas) {
+            const thumbCanvas = document.createElement('canvas');
+            thumbCanvas.width = 160;
+            thumbCanvas.height = 100;
+            const tCtx = thumbCanvas.getContext('2d');
+            if (tCtx) {
+              tCtx.drawImage(canvas, 0, 0, 160, 100);
+              const dataUrl = thumbCanvas.toDataURL('image/jpeg', 0.6);
+              this.classroom.reportActivity('paint', 'Zeichnet in Paint', dataUrl, dataUrl);
+            }
+          }
+        } catch {
+          // Ignore
+        }
+      }, 1000);
+    }
   }
 }
 

@@ -27,6 +27,8 @@ import { WhiteboardAppComponent } from './components/whiteboard-app';
 import { PeersWidgetComponent } from './components/peers-widget';
 import { SettingsApp } from './components/settings-app';
 import { StudentScreenViewer } from './components/student-screen-viewer';
+import { AddStudentModal } from './components/add-student-modal';
+import { TeacherHelpToastComponent } from './components/teacher-help-toast';
 import { AppearanceService } from './services/appearance.service';
 import { ClassroomService } from './services/classroom.service';
 import { I18nService } from './services/i18n.service';
@@ -56,6 +58,7 @@ interface DesktopIcon {
   params?: Record<string, unknown>;
   teacherOnly?: boolean;
   studentOnly?: boolean;
+  badge?: number;
 }
 
 @Component({
@@ -83,6 +86,8 @@ interface DesktopIcon {
     PeersWidgetComponent,
     SettingsApp,
     StudentScreenViewer,
+    AddStudentModal,
+    TeacherHelpToastComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -158,6 +163,7 @@ export class App {
         icon: 'groups',
         iconColor: 'text-emerald-300',
         appType: 'peers',
+        badge: isTeacher ? this.classroom.activeHelpRequests().length : undefined,
       },
       {
         id: 'icon-chat',

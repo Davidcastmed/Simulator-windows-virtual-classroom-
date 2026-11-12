@@ -68,13 +68,15 @@ export interface WhiteboardStamp {
   timestamp: number;
 }
 
+export type TeamsPresenceStatus = 'available' | 'busy' | 'away' | 'dnd' | 'presenting' | 'offline';
+
 export interface UserSession {
   id: string;
   name: string;
   role: UserRole;
   roomCode: string;
-  connectedAt: number;
-  lastActive: number;
+  connectedAt?: number;
+  lastActive?: number;
   currentApp?: string;
   activityDetail?: string;
   isHandRaised?: boolean;
@@ -84,6 +86,13 @@ export interface UserSession {
   thumbnail?: string; // latest drawing thumbnail or code snapshot
   screenSnapshot?: string; // live screen capture / snapshot of student workspace
   groupId?: string;
+  presenceStatus?: TeamsPresenceStatus;
+  statusMessage?: string;
+  handRaisedOrder?: number;
+  avatarColor?: string;
+  avatarEmoji?: string;
+  isOnline?: boolean;
+  filesCount?: number;
   reactionsReceived?: {
     bravo: number;
     star: number;

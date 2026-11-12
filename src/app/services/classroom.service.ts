@@ -5,7 +5,9 @@ import type {
   ClassroomGroup,
   ClassroomState,
   GroupNote,
+  HelpRequest,
   PeerReaction,
+  TeamsPresenceStatus,
   UserRole,
   UserSession,
   VirtualItem,
@@ -29,6 +31,10 @@ export class ClassroomService {
   readonly classroom = signal<ClassroomState | null>(null);
   readonly connectionStatus = signal<'connected' | 'connecting' | 'disconnected' | 'local'>('connecting');
   readonly syncStatus = signal<'saved' | 'saving' | 'error'>('saved');
+
+  // Modal para agregar estudiante desde el avatar o barra
+  readonly isAddStudentModalOpen = signal<boolean>(false);
+  readonly myPresenceStatus = signal<TeamsPresenceStatus>('available');
 
   // Clipboard for copy / cut
   readonly clipboard = signal<{ item: VirtualItem; isCut: boolean } | null>(null);
@@ -55,42 +61,36 @@ export class ClassroomService {
     const room = this.classroom();
     const currentGrp = this.firebase.currentGroup();
     const regUsers = this.firebase.registeredUsers().filter((u) => u.role === 'student');
+    const me = this.currentUser();
+    const now = Date.now();
 
     // Combine database registered students, group members, and live room students
     const map = new Map<string, UserSession>();
 
     // 1. Registered students from Firestore database
     for (const u of regUsers) {
+      const isCurrentSessionUser =
+        !!me &&
+        (me.id === u.id || (me.role === 'student' && me.name.toLowerCase() === u.username.toLowerCase()));
+      // Un alumno sólo tiene lastActive reciente si es esta sesión activa o si un cliente real ya envió latido
+      const studentLastActive = isCurrentSessionUser ? now : u.lastActive;
+
       map.set(u.id, {
         id: u.id,
         name: u.username,
         role: 'student' as const,
         roomCode: u.roomCode || currentGrp?.code || 'INF-101',
-        connectedAt: u.createdAt || Date.now() - 3600000,
-        lastActive: u.active ? Date.now() : Date.now() - 30000,
-        currentApp:
-          u.username === 'Lukas'
-            ? 'paint'
-            : u.username === 'Emma'
-            ? 'coding'
-            : u.username === 'Noah'
-            ? 'explorer'
-            : u.username === 'Mia'
-            ? 'logic-games'
-            : 'desktop',
-        activityDetail:
-          u.username === 'Lukas'
-            ? 'Zeichnet "Mein Haus.png"'
-            : u.username === 'Emma'
-            ? 'RoboCode: Sensor-Schleife'
-            : u.username === 'Noah'
-            ? 'Ordner strukturiert'
-            : u.username === 'Mia'
-            ? 'Zeek the Geek: Level 2'
-            : 'Arbeitsbereich bereit',
-        taskProgress:
-          u.username === 'Lukas' ? 4 : u.username === 'Emma' ? 5 : u.username === 'Noah' ? 3 : u.username === 'Mia' ? 6 : 2,
-        isHandRaised: u.username === 'Noah',
+        connectedAt: u.createdAt || now - 86400000,
+        lastActive: studentLastActive,
+        currentApp: u.currentApp || 'desktop',
+        activityDetail: u.activityDetail || (u.currentApp ? `En ${u.currentApp}` : 'Arbeitsbereich bereit'),
+        taskProgress: u.taskProgress !== undefined ? u.taskProgress : 1,
+        thumbnail: u.thumbnail,
+        screenSnapshot: u.screenSnapshot,
+        isHandRaised: !!u.isHandRaised,
+        presenceStatus: isCurrentSessionUser
+          ? this.myPresenceStatus() || 'available'
+          : u.presenceStatus || 'offline',
       });
     }
 
@@ -99,8 +99,25 @@ export class ClassroomService {
       const studentMembers = currentGrp.members.filter((m) => m.role === 'student');
       for (const m of studentMembers) {
         const existing = map.get(m.id);
+        const isCurrentSessionUser =
+          !!me &&
+          (me.id === m.id || (me.role === 'student' && me.name.toLowerCase() === m.name.toLowerCase()));
+        const memberLastActive = isCurrentSessionUser ? now : m.lastActive || existing?.lastActive;
+
         if (existing) {
-          map.set(m.id, { ...existing, lastActive: m.lastActive || existing.lastActive });
+          map.set(m.id, {
+            ...existing,
+            lastActive: memberLastActive,
+            isHandRaised: m.isHandRaised !== undefined ? m.isHandRaised : existing.isHandRaised,
+            currentApp: m.currentApp || existing.currentApp,
+            activityDetail: m.activityDetail || existing.activityDetail,
+            taskProgress: m.taskProgress !== undefined ? m.taskProgress : existing.taskProgress,
+            thumbnail: m.thumbnail || existing.thumbnail,
+            screenSnapshot: m.screenSnapshot || existing.screenSnapshot,
+            presenceStatus: isCurrentSessionUser
+              ? this.myPresenceStatus() || 'available'
+              : m.presenceStatus || existing.presenceStatus || 'offline',
+          });
         } else {
           map.set(m.id, {
             id: m.id,
@@ -108,10 +125,14 @@ export class ClassroomService {
             role: 'student' as const,
             roomCode: currentGrp.code,
             connectedAt: currentGrp.createdAt,
-            lastActive: m.lastActive || Date.now(),
-            currentApp: 'explorer',
-            activityDetail: 'Informatik Klasse 6b',
-            taskProgress: 1,
+            lastActive: memberLastActive,
+            currentApp: m.currentApp || 'desktop',
+            activityDetail: m.activityDetail || 'Informatik Klasse 6b',
+            taskProgress: m.taskProgress !== undefined ? m.taskProgress : 1,
+            thumbnail: m.thumbnail,
+            screenSnapshot: m.screenSnapshot,
+            isHandRaised: !!m.isHandRaised,
+            presenceStatus: isCurrentSessionUser ? 'available' : m.presenceStatus || 'offline',
           });
         }
       }
@@ -121,10 +142,17 @@ export class ClassroomService {
     if (room && room.students) {
       for (const s of room.students) {
         const existing = map.get(s.id);
+        const isCurrentSessionUser = !!me && me.id === s.id;
         if (existing) {
-          map.set(s.id, { ...existing, ...s, lastActive: Date.now() });
-        } else {
-          map.set(s.id, { ...s, lastActive: Date.now() });
+          map.set(s.id, {
+            ...existing,
+            ...s,
+            lastActive: isCurrentSessionUser ? now : s.lastActive || existing.lastActive,
+            isHandRaised: s.isHandRaised !== undefined ? s.isHandRaised : existing.isHandRaised,
+            presenceStatus: isCurrentSessionUser
+              ? this.myPresenceStatus() || 'available'
+              : existing.presenceStatus,
+          });
         }
       }
     }
@@ -191,13 +219,117 @@ export class ClassroomService {
   readonly whiteboardStrokes = computed(() => this.classroom()?.whiteboardStrokes || []);
   readonly whiteboardStamps = computed(() => this.classroom()?.whiteboardStamps || []);
 
-  readonly onlineStudents = computed(() => {
+  readonly activeHelpRequests = computed<HelpRequest[]>(() => {
+    const currentGrp = this.firebase.currentGroup();
+    const localHelpRequests = this.classroom()?.helpRequests || [];
+    const groupHelpRequests = currentGrp?.helpQueue || [];
+
+    const map = new Map<string, HelpRequest>();
+    for (const h of localHelpRequests) {
+      map.set(h.studentId, h);
+    }
+    for (const gh of groupHelpRequests) {
+      map.set(gh.studentId, {
+        id: gh.id || 'help_' + gh.studentId,
+        studentId: gh.studentId,
+        studentName: gh.studentName,
+        message: gh.message,
+        timestamp: gh.timestamp,
+      });
+    }
+    return Array.from(map.values()).sort((a, b) => a.timestamp - b.timestamp);
+  });
+
+  readonly onlineStudents = computed<UserSession[]>(() => {
     const list = this.students();
     const now = Date.now();
-    return list.map((s) => ({
-      ...s,
-      isOnline: s.lastActive ? now - s.lastActive < 300000 : true,
-    }));
+    const me = this.currentUser();
+    const demo = this.classroom()?.demoMode;
+    const allHelpRequests = this.activeHelpRequests();
+
+    // Cola numerada de manos levantadas estilo Microsoft Teams (#1, #2, ...)
+    const handRaisedOrderMap = new Map<string, number>();
+    let orderCounter = 1;
+    for (const req of allHelpRequests) {
+      if (!handRaisedOrderMap.has(req.studentId)) {
+        handRaisedOrderMap.set(req.studentId, orderCounter++);
+      }
+    }
+
+    // Colores oficiales de presencia de Microsoft Teams
+    const teamsColors = ['#0078d4', '#107c41', '#d83b01', '#8764b8', '#008272', '#b4009e', '#038387'];
+
+    return list.map((s) => {
+      const isCurrentSessionUser =
+        !!me &&
+        (me.id === s.id || (me.role === 'student' && me.name.toLowerCase() === s.name.toLowerCase()));
+      // CRÍTICO: Un estudiante sólo está ONLINE si es el usuario actual de este navegador O si tiene un latido registrado en los últimos 60 segundos
+      const timeSinceActive = isCurrentSessionUser ? 0 : s.lastActive ? now - s.lastActive : Number.MAX_SAFE_INTEGER;
+      const isOnline = isCurrentSessionUser || timeSinceActive < 60000;
+      const isHandRaised = !!s.isHandRaised || handRaisedOrderMap.has(s.id);
+      const handOrder = handRaisedOrderMap.get(s.id) || (s.isHandRaised ? 1 : undefined);
+
+      let presenceStatus: TeamsPresenceStatus = 'offline';
+      let statusMessage = '';
+
+      if (demo?.active && demo.controlledBy === s.id) {
+        presenceStatus = 'presenting';
+        statusMessage = '🟣 Compartiendo pantalla en clase';
+      } else if (isHandRaised) {
+        presenceStatus = 'busy';
+        statusMessage = `✋ Mano levantada (#${handOrder || 1}): Solicitó ayuda`;
+      } else if (!isOnline || timeSinceActive > 60000) {
+        presenceStatus = 'offline';
+        statusMessage = '⚪ Desconectado (Sin sesión abierta)';
+      } else if (timeSinceActive > 40000) {
+        presenceStatus = 'away';
+        statusMessage = '🟡 Ausente';
+      } else {
+        if (s.presenceStatus && s.presenceStatus !== 'offline') {
+          presenceStatus = s.presenceStatus;
+        } else {
+          presenceStatus = 'available';
+        }
+
+        if (s.currentApp === 'paint') {
+          presenceStatus = 'busy';
+          statusMessage = '🔴 Ocupado — En Paint';
+        } else if (s.currentApp === 'coding') {
+          presenceStatus = 'busy';
+          statusMessage = '🔴 Ocupado — En RoboCode';
+        } else if (s.currentApp === 'logic-games') {
+          presenceStatus = 'busy';
+          statusMessage = '🔴 Ocupado — En Zeek the Geek';
+        } else if (s.currentApp === 'explorer') {
+          statusMessage = '🟢 Disponible — En Explorador';
+        } else {
+          statusMessage = '🟢 Disponible — En el aula';
+        }
+      }
+
+      // Hash consistente de color para el avatar Teams
+      let hash = 0;
+      for (let i = 0; i < (s.name || '').length; i++) {
+        hash = s.name.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const avatarColor = teamsColors[Math.abs(hash) % teamsColors.length];
+
+      const filesRecord = this.classroom()?.files || {};
+      const filesCount = Object.values(filesRecord).filter(
+        (f: VirtualItem) => !f.inTrash && f.type === 'file' && f.path.startsWith(`/Klasse/${s.name}`)
+      ).length;
+
+      return {
+        ...s,
+        isOnline,
+        isHandRaised,
+        handRaisedOrder: handOrder,
+        presenceStatus,
+        statusMessage,
+        avatarColor,
+        filesCount,
+      };
+    });
   });
 
   readonly activePeersCount = computed(() => {
@@ -216,9 +348,13 @@ export class ClassroomService {
   private restoreSessionFromStorage(): void {
     if (typeof window === 'undefined') return;
     try {
-      const savedSession = localStorage.getItem(STORAGE_SESSION_KEY);
-      const savedRoomCode = localStorage.getItem(STORAGE_ROOM_KEY);
-      const savedRoomState = localStorage.getItem(STORAGE_ROOM_STATE_KEY);
+      // Prioritize tab-specific sessionStorage so teacher and student can be opened in separate tabs
+      const savedSession =
+        sessionStorage.getItem(STORAGE_SESSION_KEY) || localStorage.getItem(STORAGE_SESSION_KEY);
+      const savedRoomCode =
+        sessionStorage.getItem(STORAGE_ROOM_KEY) || localStorage.getItem(STORAGE_ROOM_KEY);
+      const savedRoomState =
+        sessionStorage.getItem(STORAGE_ROOM_STATE_KEY) || localStorage.getItem(STORAGE_ROOM_STATE_KEY);
       if (savedSession && savedRoomCode) {
         const user: UserSession = JSON.parse(savedSession);
         this.currentUser.set(user);
@@ -232,31 +368,34 @@ export class ClassroomService {
             this.connectionStatus.set('local');
           } catch {
             // Clear broken room cache
+            sessionStorage.removeItem(STORAGE_ROOM_STATE_KEY);
             localStorage.removeItem(STORAGE_ROOM_STATE_KEY);
           }
         }
 
-        this.fetchClassroomState(savedRoomCode).then((success) => {
-          if (success) {
-            this.connectEventStream(savedRoomCode);
-            this.startHeartbeat();
-          } else {
-            // Server unavailable (e.g. Vercel or offline): stay in local resilient mode
-            this.connectionStatus.set('local');
-            if (!this.classroom()) {
-              const fallback = this.initializeLocalClassroom(
-                savedRoomCode,
-                'Klassenraum',
-                user.name,
-                user.role,
-              );
-              this.classroom.set(fallback.room);
-              this.saveRoomStateToStorage(fallback.room);
+        this.fetchClassroomState(savedRoomCode)
+          .then((success) => {
+            if (success) {
+              this.connectEventStream(savedRoomCode);
+              this.startHeartbeat();
+            } else {
+              // Server unavailable (e.g. Vercel or offline): stay in local resilient mode
+              this.connectionStatus.set('local');
+              if (!this.classroom()) {
+                const fallback = this.initializeLocalClassroom(
+                  savedRoomCode,
+                  'Klassenraum',
+                  user.name,
+                  user.role,
+                );
+                this.classroom.set(fallback.room);
+                this.saveRoomStateToStorage(fallback.room);
+              }
             }
-          }
-        }).catch(() => {
-          this.connectionStatus.set('local');
-        });
+          })
+          .catch(() => {
+            this.connectionStatus.set('local');
+          });
       } else {
         this.connectionStatus.set('disconnected');
       }
@@ -270,7 +409,10 @@ export class ClassroomService {
   private saveSessionToStorage(user: UserSession, roomCode: string): void {
     if (typeof window === 'undefined') return;
     try {
-      localStorage.setItem(STORAGE_SESSION_KEY, JSON.stringify(user));
+      const userStr = JSON.stringify(user);
+      sessionStorage.setItem(STORAGE_SESSION_KEY, userStr);
+      sessionStorage.setItem(STORAGE_ROOM_KEY, roomCode);
+      localStorage.setItem(STORAGE_SESSION_KEY, userStr);
       localStorage.setItem(STORAGE_ROOM_KEY, roomCode);
     } catch (e) {
       console.error('Storage save error:', e);
@@ -296,7 +438,9 @@ export class ClassroomService {
         whiteboardStrokes: (room.whiteboardStrokes || []).slice(-50),
         whiteboardStamps: (room.whiteboardStamps || []).slice(-30),
       };
-      localStorage.setItem(STORAGE_ROOM_STATE_KEY, JSON.stringify(lightRoom));
+      const roomStr = JSON.stringify(lightRoom);
+      sessionStorage.setItem(STORAGE_ROOM_STATE_KEY, roomStr);
+      localStorage.setItem(STORAGE_ROOM_STATE_KEY, roomStr);
     } catch {
       // Storage quota or unavailable: safely ignore
     }
@@ -305,6 +449,9 @@ export class ClassroomService {
   private clearSessionStorage(): void {
     if (typeof window === 'undefined') return;
     try {
+      sessionStorage.removeItem(STORAGE_SESSION_KEY);
+      sessionStorage.removeItem(STORAGE_ROOM_KEY);
+      sessionStorage.removeItem(STORAGE_ROOM_STATE_KEY);
       localStorage.removeItem(STORAGE_SESSION_KEY);
       localStorage.removeItem(STORAGE_ROOM_KEY);
       localStorage.removeItem(STORAGE_ROOM_STATE_KEY);
@@ -316,6 +463,7 @@ export class ClassroomService {
   private connectFirestoreSync(code: string): void {
     if (typeof window === 'undefined') return;
     try {
+      this.firebase.subscribeToUsers();
       this.firebase.subscribeToGroups();
       this.firebase.subscribeToGroupMessages(code);
       this.firebase.subscribeToCollaboration(code);
@@ -338,7 +486,9 @@ export class ClassroomService {
     this.saveSessionToStorage(fallback.user, fallback.room.code);
     this.saveRoomStateToStorage(fallback.room);
     this.connectFirestoreSync(fallback.room.code);
-    this.connectionStatus.set('local');
+    this.connectEventStream(fallback.room.code);
+    this.startHeartbeat();
+    this.connectionStatus.set('connected');
     this.syncStatus.set('saved');
     return fallback;
   }
@@ -539,18 +689,22 @@ export class ClassroomService {
       };
     }
 
-    const initialStudents: UserSession[] = studentNames.map((name, i) => ({
-      id: `user_student_${name.toLowerCase()}`,
-      name,
-      role: 'student' as const,
-      roomCode: code,
-      connectedAt: now - 3600000,
-      lastActive: now - (i * 15000), // All active recently
-      isHandRaised: name === 'Noah',
-      currentApp: name === 'Lukas' ? 'paint' : name === 'Emma' ? 'coding' : name === 'Noah' ? 'explorer' : name === 'Mia' ? 'logic-games' : 'desktop',
-      activityDetail: name === 'Lukas' ? 'Zeichnet "Mein Haus"' : name === 'Emma' ? 'RoboCode: Sensor-Schleife' : name === 'Noah' ? 'Ordner strukturiert' : name === 'Mia' ? 'Zeek the Geek: Level 2' : 'Arbeitsbereich bereit',
-      taskProgress: name === 'Lukas' ? 4 : name === 'Emma' ? 5 : name === 'Noah' ? 3 : name === 'Mia' ? 6 : 2,
-    }));
+    const initialStudents: UserSession[] = studentNames.map((name) => {
+      const isCurrent = role === 'student' && userName.toLowerCase() === name.toLowerCase();
+      return {
+        id: `user_student_${name.toLowerCase()}`,
+        name,
+        role: 'student' as const,
+        roomCode: code,
+        connectedAt: isCurrent ? now : now - 86400000,
+        lastActive: isCurrent ? now : undefined,
+        isHandRaised: false,
+        currentApp: 'desktop',
+        activityDetail: 'Arbeitsbereich bereit',
+        taskProgress: 1,
+        presenceStatus: isCurrent ? 'available' : 'offline',
+      };
+    });
 
     const room: ClassroomState = {
       code,
@@ -561,15 +715,7 @@ export class ClassroomService {
       students: initialStudents,
       files,
       demoMode: { active: false, controlledBy: '', controlledByName: '' },
-      helpRequests: [
-        {
-          id: 'help_init_noah',
-          studentId: 'user_student_noah',
-          studentName: 'Noah',
-          message: 'Hilfe bei den Datei-Rechten für die Gruppe!',
-          timestamp: now - 120000,
-        },
-      ],
+      helpRequests: [],
       observingStudentId: null,
       chatMessages: [
         {
@@ -591,6 +737,18 @@ export class ClassroomService {
   }
 
   leaveClassroom(): void {
+    const user = this.currentUser();
+    if (user) {
+      try {
+        this.firebase.updateStudentPresence(user.id, {
+          lastActive: 0,
+          presenceStatus: 'offline',
+          isHandRaised: false,
+        });
+      } catch {
+        // Ignore
+      }
+    }
     this.stopHeartbeat();
     if (this.eventSource) {
       this.eventSource.close();
@@ -867,6 +1025,18 @@ export class ClassroomService {
         .toPromise();
     } catch {
       // Ignore background heartbeat error
+    }
+
+    // Persistir presencia en tiempo real en la base de datos Firestore
+    try {
+      await this.firebase.updateStudentPresence(user.id, {
+        lastActive: Date.now(),
+        currentApp: options?.currentApp || user.currentApp,
+        presenceStatus: this.myPresenceStatus(),
+        isHandRaised: user.isHandRaised,
+      });
+    } catch {
+      // Ignorar error de fondo
     }
   }
 
@@ -1359,6 +1529,16 @@ export class ClassroomService {
     const room = this.classroom();
     if (!user || !room) return;
 
+    this.currentUser.update((u) => (u ? { ...u, isHandRaised: true } : null));
+
+    // 1. Persistir solicitud en tiempo real en Firestore (cola compartida del grupo)
+    try {
+      await this.firebase.raiseHand(user.id, user.name, message || 'Braucht Hilfe');
+    } catch (e) {
+      console.warn('Firestore raiseHand error:', e);
+    }
+
+    // 2. Transmitir por SSE local
     try {
       await this.http
         .post(`/api/classroom/${room.code}/help/request`, {
@@ -1370,12 +1550,56 @@ export class ClassroomService {
     } catch {
       // Ignore help request error
     }
+
+    // 3. Notificación en el chat de la clase
+    try {
+      await this.sendChatMessage(
+        `✋ ${user.name} ha levantado la mano para participar: "${message || 'Consulta de clase'}"`,
+        'question',
+        '✋',
+      );
+    } catch {
+      // Ignore
+    }
+
+    // 4. Actualización optimista local
+    this.classroom.update((current) => {
+      if (!current) return null;
+      const prev = current.helpRequests || [];
+      const exists = prev.some((h) => h.studentId === user.id);
+      const helpRequests = exists
+        ? prev
+        : [
+            ...prev,
+            {
+              id: 'help_' + Date.now(),
+              studentId: user.id,
+              studentName: user.name,
+              message: message || 'Braucht Hilfe',
+              timestamp: Date.now(),
+            },
+          ];
+      const students = (current.students || []).map((s) =>
+        s.id === user.id ? { ...s, isHandRaised: true } : s,
+      );
+      const updated = { ...current, helpRequests, students };
+      this.saveRoomStateToStorage(updated);
+      return updated;
+    });
   }
 
   async resolveHelp(studentId: string): Promise<void> {
     const room = this.classroom();
     if (!room) return;
 
+    // 1. Quitar solicitud de mano en Firestore
+    try {
+      await this.firebase.lowerHand(studentId);
+    } catch (e) {
+      console.warn('Firestore lowerHand error:', e);
+    }
+
+    // 2. Transmitir por SSE local
     try {
       await this.http
         .post(`/api/classroom/${room.code}/help/resolve`, {
@@ -1385,6 +1609,31 @@ export class ClassroomService {
     } catch {
       // Ignore resolve help error
     }
+
+    // 3. Notificación en el chat de la clase
+    const student = this.students().find((s) => s.id === studentId);
+    const studentName = student?.name || 'el alumno';
+    try {
+      await this.sendChatMessage(
+        `✅ La consulta de ${studentName} ha sido atendida por la profesora.`,
+        'text',
+        '✅',
+      );
+    } catch {
+      // Ignore
+    }
+
+    // 4. Actualización local
+    this.classroom.update((current) => {
+      if (!current) return null;
+      const students = (current.students || []).map((s) =>
+        s.id === studentId ? { ...s, isHandRaised: false } : s,
+      );
+      const helpRequests = (current.helpRequests || []).filter((h) => h.studentId !== studentId);
+      const updated = { ...current, students, helpRequests };
+      this.saveRoomStateToStorage(updated);
+      return updated;
+    });
   }
 
   async setObserving(targetStudentId: string | null): Promise<void> {
@@ -1613,6 +1862,18 @@ export class ClassroomService {
     const room = this.classroom();
     if (!user || !room) return;
 
+    this.currentUser.update((u) => {
+      if (!u) return null;
+      return {
+        ...u,
+        currentApp: currentApp || u.currentApp,
+        activityDetail: activityDetail || u.activityDetail,
+        thumbnail: thumbnail || u.thumbnail,
+        screenSnapshot: screenSnapshot || u.screenSnapshot,
+        lastActive: Date.now(),
+      };
+    });
+
     try {
       await this.http
         .post(`/api/classroom/${room.code}/activity`, {
@@ -1625,6 +1886,19 @@ export class ClassroomService {
         .toPromise();
     } catch {
       // Ignore background ping
+    }
+
+    try {
+      await this.firebase.updateStudentPresence(user.id, {
+        lastActive: Date.now(),
+        currentApp: currentApp || user.currentApp,
+        activityDetail,
+        thumbnail,
+        screenSnapshot,
+        presenceStatus: this.myPresenceStatus(),
+      });
+    } catch {
+      // Ignore
     }
   }
 
@@ -1831,5 +2105,136 @@ export class ClassroomService {
     });
 
     return true;
+  }
+
+  // ==========================================
+  // TEAMS PRESENCE & STUDENT MANAGEMENT
+  // ==========================================
+
+  openAddStudentModal(): void {
+    this.isAddStudentModalOpen.set(true);
+  }
+
+  closeAddStudentModal(): void {
+    this.isAddStudentModalOpen.set(false);
+  }
+
+  setMyPresence(status: TeamsPresenceStatus): void {
+    this.myPresenceStatus.set(status);
+    this.currentUser.update((u) => {
+      if (!u) return null;
+      return { ...u, presenceStatus: status };
+    });
+    const user = this.currentUser();
+    if (user) {
+      this.firebase.updateStudentPresence(user.id, {
+        presenceStatus: status,
+        lastActive: Date.now(),
+      });
+    }
+  }
+
+  lowerStudentHand(studentId: string): void {
+    this.resolveHelp(studentId);
+    this.classroom.update((current) => {
+      if (!current) return null;
+      const students = (current.students || []).map((s) => (s.id === studentId ? { ...s, isHandRaised: false } : s));
+      const helpRequests = (current.helpRequests || []).filter((h) => h.studentId !== studentId);
+      const updated = { ...current, students, helpRequests };
+      this.saveRoomStateToStorage(updated);
+      return updated;
+    });
+  }
+
+  /**
+   * Agrega un nuevo estudiante al aula virtual, crea su espacio de trabajo y lo persiste en Firestore
+   */
+  async addStudent(
+    name: string,
+    options?: { currentApp?: string; avatarColor?: string },
+  ): Promise<UserSession> {
+    const cleanName = name.trim();
+    const app = options?.currentApp || 'paint';
+    const id =
+      'user_student_' +
+      cleanName.toLowerCase().replace(/[^a-z0-9]/g, '_') +
+      '_' +
+      Math.random().toString(36).substring(2, 6);
+    const now = Date.now();
+
+    const newStudent: UserSession = {
+      id,
+      name: cleanName,
+      role: 'student',
+      roomCode: 'INF-101',
+      connectedAt: now,
+      lastActive: now,
+      isHandRaised: false,
+      currentApp: app,
+      activityDetail:
+        app === 'paint'
+          ? 'Zeichnet "Mein Projekt.png"'
+          : app === 'coding'
+          ? 'RoboCode: Startet Projekt'
+          : 'Arbeitsbereich bereit',
+      taskProgress: 1,
+      presenceStatus: 'available',
+      statusMessage: '🟢 En línea — ' + (app === 'paint' ? 'En Paint' : app === 'coding' ? 'En RoboCode' : 'En el Escritorio'),
+      avatarColor: options?.avatarColor,
+    };
+
+    // 1. Crear estructura de carpetas y archivo de muestra en el sistema de archivos virtual
+    const folderPath = `/Klasse/${cleanName}`;
+    const starterArtPath = `${folderPath}/Mein Projekt.png`;
+
+    this.classroom.update((current) => {
+      if (!current) return null;
+      const updatedStudents = [...(current.students || []), newStudent];
+      const updatedFiles = {
+        ...current.files,
+        [folderPath]: {
+          id: `f_folder_${cleanName.toLowerCase()}`,
+          name: cleanName,
+          type: 'folder' as const,
+          parentId: 'f_klasse',
+          path: folderPath,
+          ownerId: id,
+          ownerName: cleanName,
+          createdAt: now,
+          updatedAt: now,
+        },
+        [starterArtPath]: {
+          id: `f_art_${cleanName.toLowerCase()}`,
+          name: 'Mein Projekt.png',
+          type: 'file' as const,
+          fileType: 'image' as const,
+          parentId: `f_folder_${cleanName.toLowerCase()}`,
+          path: starterArtPath,
+          ownerId: id,
+          ownerName: cleanName,
+          sizeBytes: 4096,
+          createdAt: now,
+          updatedAt: now,
+          content:
+            'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200" viewBox="0 0 320 200"><rect width="320" height="200" fill="%230f172a"/><circle cx="160" cy="100" r="50" fill="%233b82f6"/><text x="160" y="105" fill="white" font-size="14" text-anchor="middle">Hallo ' +
+            cleanName +
+            '!</text></svg>',
+        },
+      };
+      const updatedRoom = { ...current, students: updatedStudents, files: updatedFiles };
+      this.saveRoomStateToStorage(updatedRoom);
+      return updatedRoom;
+    });
+
+    // 2. Persistir en Firestore (colección users y groups)
+    try {
+      await this.firebase.addStudentUser(cleanName, 'INF-101');
+      await this.sendChatMessage(`👋 ¡Se ha unido ${cleanName} a la clase!`, 'text');
+    } catch (e) {
+      console.warn('Firebase student registration error:', e);
+    }
+
+    this.closeAddStudentModal();
+    return newStudent;
   }
 }
